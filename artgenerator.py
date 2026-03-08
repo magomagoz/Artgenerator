@@ -3,7 +3,7 @@ import google.generativeai as genai
 from fpdf import FPDF
 
 # Configurazione API
-genai.configure(api_key="TUA_API_KEY")
+genai.configure(api_key="AIzaSyArOVxmWMfbHnmMJCLoYx6y3ow5g7b1Frk")
 model = genai.GenerativeModel('gemini-1.5-flash') # Versione più moderna e veloce
 
 st.set_page_config(page_title="Interpretazioni d'Arte", page_icon="🎨", layout = "wide")
