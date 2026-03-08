@@ -94,20 +94,15 @@ soggetto = col2.text_input("Soggetto da interpretare")
 # --- Bottone Genera ---
 if st.button("Genera Interpretazione Artistica"):
     if pittore and soggetto:
-        # --- Generazione Testuale ---
+        # 1. GENERAZIONE TESTUALE
         st.subheader("🖋️ Analisi Testuale")
+        # CORREZIONE: Il modello corretto è gemini-2.5-flash
         text_model = genai.GenerativeModel('gemini-2.5-flash')
 
         text_prompt = f"""
         Sei un critico d'arte ed esperto di tecniche pittoriche storiche. 
         Analizza il soggetto '{soggetto}' come se fosse stato dipinto da {pittore}.
-        
-        Struttura la risposta in tre punti:
-        1. **Analisi Tecnica**: Descrivi la pennellata, l'uso del colore e la luce tipica dell'autore.
-        2. **Composizione**: Spiega come verrebbe impostata la scena.
-        3. **Interpretazione concettuale**: Spiega perché questa scelta stilistica valorizza il soggetto.
-        
-        Mantieni un tono accademico ma ispirato.
+        Struttura la risposta in tre punti: Analisi Tecnica, Composizione, Interpretazione concettuale.
         """
         
         with st.spinner('Analizzando lo stile del maestro...'):
@@ -115,57 +110,56 @@ if st.button("Genera Interpretazione Artistica"):
                 text_response = text_model.generate_content(text_prompt)
                 analisi_testuale = text_response.text
                 st.markdown(analisi_testuale)
+                
+                # SALVATAGGIO IMMEDIATO NELLO STATO
+                st.session_state.analisi_generata = analisi_testuale
+                st.session_state.pittore_corrente = pittore
+                st.session_state.soggetto_corrente = soggetto
+                
             except Exception as e:
-                st.error(f"Errore durante la generazione dell'analisi testuale: {e}")
-                analisi_testuale = "Errore durante la generazione dell'analisi."
+                st.error(f"Errore Analisi: {e}")
+                analisi_testuale = None
 
         st.divider()
         
-        # --- Generazione Immagine ---
-        st.subheader("🖼️ Opera Generata")
-        image_prompt_generator_model = genai.GenerativeModel('gemini-2.5-flash')
-        
-        image_description_prompt = f"""
-        Basandoti sullo stile di {pittore} e sul soggetto '{soggetto}', 
-        crea una descrizione dettagliata per un generatore di immagini AI. 
-        La descrizione deve includere dettagli su:
-        - tipo di immagine (dipinto ad olio, acquerello, scultura, ecc.)
-        - colori dominanti e tavolozza
-        - composizione e inquadratura
-        - illuminazione e atmosfera
-        - elementi specifici del pittore (es. pennellate, figure distorte, chiaroscuro)
-        - dettagli sul soggetto '{soggetto}' nel contesto di quello stile.
-        La descrizione deve essere in inglese e avere una lunghezza massima di 150 parole.
-        """
-        
-        with st.spinner('Il maestro sta dipingendo...'):
-            try:
-                # Generazione prompt per Stability
-                image_description_response = image_prompt_generator_model.generate_content(image_description_prompt)
-                final_image_prompt = image_description_response.text
-                
-                # Chiamata a Stability AI
-                immagine_bytes = genera_immagine_stability(final_image_prompt)
-                
-                # Visualizzazione
-                st.image(immagine_bytes, caption=f"Reinterpretazione di {pittore}")
-                
-                # Generazione PDF
-                pdf_data = crea_pdf_completo(
-                    st.session_state.pittore_corrente,
-                    st.session_state.soggetto_corrente,
-                    st.session_state.analisi_generata,
-                    st.session_state.immagine_generata
-                )
-                
-                st.download_button(
-                    label="💾 Scarica PDF Artistico",
-                    data=pdf_data,
-                    file_name=f"{st.session_state.pittore_corrente}_{st.session_state.soggetto_corrente}.pdf",
-                    mime="application/pdf"
-                )
-                
-            except Exception as e:
-                st.error(f"Errore durante la generazione dell'immagine: {e}")
+        # 2. GENERAZIONE IMMAGINE
+        if analisi_testuale:
+            st.subheader("🖼️ Opera Generata")
+            img_gen_model = genai.GenerativeModel('gemini-2.5-flash')
+            
+            img_prompt_desc = f"Create a detailed English prompt for an AI image generator: '{soggetto}' painted by {pittore}. Focus on brushwork, colors and lighting."
+            
+            with st.spinner('Il maestro sta dipingendo...'):
+                try:
+                    img_desc_res = img_gen_model.generate_content(img_prompt_desc)
+                    final_prompt = img_desc_res.text
+                    
+                    # Chiamata a Stability
+                    immagine_bytes = genera_immagine_stability(final_prompt)
+                    
+                    # SALVATAGGIO NELLO STATO
+                    st.session_state.immagine_generata = immagine_bytes
+                    
+                    # VISUALIZZAZIONE
+                    st.image(immagine_bytes, caption=f"Interpretazione di {pittore}")
+                    
+                    # GENERAZIONE PDF (usiamo le variabili locali appena create per evitare il NoneType)
+                    pdf_data = crea_pdf_completo(
+                        pittore,
+                        soggetto,
+                        analisi_testuale,
+                        immagine_bytes
+                    )
+                    
+                    st.download_button(
+                        label="💾 Scarica PDF Artistico",
+                        data=pdf_data,
+                        file_name=f"{pittore}_{soggetto}.pdf",
+                        mime="application/pdf"
+                    )
+                    
+                except Exception as e:
+                    st.error(f"Errore Immagine: {e}")
     else:
         st.warning("Per favore, compila entrambi i campi.")
+        
