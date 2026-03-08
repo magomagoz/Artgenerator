@@ -2,6 +2,18 @@ import streamlit as st
 import google.generativeai as genai
 from fpdf import FPDF
 import io # Per gestire l'immagine in memoria
+from vertexai.preview.vision_models import ImageGenerationModel
+
+def genera_immagine_vertex(prompt):
+    model = ImageGenerationModel.from_pretrained("imagen-3.0-generate-001")
+    images = model.generate_images(
+        prompt=prompt,
+        number_of_images=1,
+        aspect_ratio="16:9",
+        safety_filter_level="block_medium_and_above",
+        person_generation="allow_adult",
+    )
+    return images[0] # Ritorna il primo oggetto immagine
 
 # --- Configurazione API ---
 # Assicurati che API_KEY sia configurata in .streamlit/secrets.toml
