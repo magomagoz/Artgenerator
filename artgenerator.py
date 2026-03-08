@@ -6,7 +6,7 @@ import os
 import requests
 
 # --- Configurazione API ---
-#genai.configure(api_key=st.secrets["API_KEY"])
+genai.configure(api_key=st.secrets["API_KEY"])
 STABILITY_API_KEY = st.secrets["STABILITY_API_KEY"]
 
 def genera_immagine_stability(prompt):
