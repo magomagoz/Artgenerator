@@ -5,7 +5,7 @@ from fpdf import FPDF
 # Configurazione API
 genai.configure(api_key=st.secrets["API_KEY"])
 
-model = genai.GenerativeModel('gemini-1.5-flash') # Versione più moderna e veloce
+model = genai.GenerativeModel('gemini-1.5-pro') # Versione più moderna e veloce
 
 st.set_page_config(page_title="Interpretazioni d'Arte", page_icon="🎨", layout = "wide")
 st.image("banner.png")
