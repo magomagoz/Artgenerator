@@ -6,7 +6,7 @@ import os
 import requests
 
 # --- Configurazione API ---
-genai.configure(api_key=st.secrets["API_KEY"])
+#genai.configure(api_key=st.secrets["API_KEY"])
 STABILITY_API_KEY = st.secrets["STABILITY_API_KEY"]
 
 def genera_immagine_stability(prompt):
@@ -52,7 +52,8 @@ def crea_pdf_con_immagine(testo_analisi, immagine_bytes=None):
 
 # --- Configurazione Pagina Streamlit ---
 st.set_page_config(page_title="Il Pennello del Tempo", page_icon="🎨", layout="wide")
-st.title("🎨 Il Pennello del Tempo: Analisi & Creazione")
+st.image("banner.png")
+#st.title("🎨 Il Pennello del Tempo: Analisi & Creazione")
 
 # --- Controlli Input ---
 col1, col2 = st.columns(2)
