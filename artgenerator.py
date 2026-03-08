@@ -97,7 +97,7 @@ if st.button("Genera Interpretazione Artistica"):
         # 1. GENERAZIONE TESTUALE
         st.subheader("🖋️ Analisi Testuale")
         # CORREZIONE: Il modello corretto è gemini-2.5-flash
-        text_model = genai.GenerativeModel('gemini-2.5-pro')
+        text_model = genai.GenerativeModel('gemini-2.5-flash')
 
         text_prompt = f"""
         Sei un critico d'arte ed esperto di tecniche pittoriche storiche. 
@@ -125,7 +125,7 @@ if st.button("Genera Interpretazione Artistica"):
         # 2. GENERAZIONE IMMAGINE
         if analisi_testuale:
             st.subheader("🖼️ Opera Generata")
-            img_gen_model = genai.GenerativeModel('gemini-2.5-pro')
+            img_gen_model = genai.GenerativeModel('gemini-2.5-flash')
             
             img_prompt_desc = f"Create a detailed English prompt for an AI image generator: '{soggetto}' painted by {pittore}. Focus on brushwork, colors and lighting."
             
