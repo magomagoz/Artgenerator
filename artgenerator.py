@@ -1,26 +1,33 @@
 import streamlit as st
 import google.generativeai as genai
 from fpdf import FPDF
-import io # Per gestire l'immagine in memoria
-from vertexai.preview.vision_models import ImageGenerationModel
-
-def genera_immagine_vertex(prompt):
-    model = ImageGenerationModel.from_pretrained("imagen-3.0-generate-001")
-    images = model.generate_images(
-        prompt=prompt,
-        number_of_images=1,
-        aspect_ratio="16:9",
-        safety_filter_level="block_medium_and_above",
-        person_generation="allow_adult",
-    )
-    return images[0] # Ritorna il primo oggetto immagine
+import io 
+import os
+import requests
 
 # --- Configurazione API ---
-# Assicurati che API_KEY sia configurata in .streamlit/secrets.toml
-# o nelle Streamlit Cloud secrets
 genai.configure(api_key=st.secrets["API_KEY"])
+STABILITY_API_KEY = st.secrets["STABILITY_API_KEY"]
 
-# --- Funzione PDF (come prima) ---
+def genera_immagine_stability(prompt):
+    """Chiama l'API di Stability AI per generare un'immagine."""
+    url = "https://api.stability.ai/v2beta/stable-image/generate/core"
+    headers = {
+        "authorization": f"Bearer {STABILITY_API_KEY}",
+        "accept": "image/*"
+    }
+    files = {"none": ""}
+    data = {
+        "prompt": prompt,
+        "output_format": "png"
+    }
+    response = requests.post(url, headers=headers, files=files, data=data)
+    if response.status_code == 200:
+        return response.content
+    else:
+        raise Exception(f"Errore Stability AI: {response.text}")
+
+# --- Funzione PDF ---
 class PDF(FPDF):
     def header(self):
         self.set_font('Arial', 'B', 12)
@@ -33,15 +40,12 @@ def crea_pdf_con_immagine(testo_analisi, immagine_bytes=None):
     pdf.multi_cell(0, 10, txt=testo_analisi.encode('latin-1', 'replace').decode('latin-1'))
 
     if immagine_bytes:
-        pdf.ln(10) # Line break
+        pdf.ln(10)
         pdf.set_font("Arial", 'B', 12)
         pdf.cell(0, 10, 'Opera Generata:', 0, 1, 'L')
-        # Salva l'immagine temporaneamente per FPDF
         with open("temp_image.png", "wb") as f:
             f.write(immagine_bytes)
-        pdf.image("temp_image.png", x=10, w=100) # w=100 per ridimensionarla
-        # Rimuovi l'immagine temporanea dopo l'uso
-        import os
+        pdf.image("temp_image.png", x=10, w=100)
         os.remove("temp_image.png")
     
     return pdf.output(dest='S').encode('latin-1')
@@ -60,7 +64,7 @@ if st.button("Genera Interpretazione Artistica e Immagine"):
     if pittore and soggetto:
         # --- Generazione Testuale ---
         st.subheader("### Analisi Testuale")
-        text_model = genai.GenerativeModel('gemini-2.5-flash')
+        text_model = genai.GenerativeModel('gemini-1.5-flash')
 
         text_prompt = f"""
         Sei un critico d'arte ed esperto di tecniche pittoriche storiche. 
@@ -81,23 +85,13 @@ if st.button("Genera Interpretazione Artistica e Immagine"):
                 st.markdown(analisi_testuale)
             except Exception as e:
                 st.error(f"Errore durante la generazione dell'analisi testuale: {e}")
-                analisi_testuale = "Errore durante la generazione dell'analisi." # Per evitare errori nel PDF
+                analisi_testuale = "Errore durante la generazione dell'analisi."
 
-        st.divider() # Separatore visivo
+        st.divider()
         
         # --- Generazione Immagine ---
         st.subheader("### Opera Generata")
-        # Il nome del modello per la generazione di immagini potrebbe essere diverso.
-        # Usa un modello che supporti la generazione di immagini.
-        # A seconda della tua configurazione e accesso, potrebbe essere 'gemini-1.5-pro-vision', 'gemini-1.0-pro-vision'
-        # o un modello dedicato come Imagen 2 se hai accesso diretto.
-        
-        # Per semplicità e maggiore compatibilità, useremo 'gemini-1.5-pro' anche per l'immagine
-        # e gli chiederemo di generare un prompt descrittivo per un modello di immagine esterno.
-        # Idealmente, qui useresti un modello specifico per immagini (es. 'imagen-2' se accessibile).
-        
-        # Generiamo un prompt descrittivo dall'LLM testuale per un ipotetico generatore di immagini
-        image_prompt_generator_model = genai.GenerativeModel('gemini-2.5-flash')
+        image_prompt_generator_model = genai.GenerativeModel('gemini-1.5-flash')
         
         image_description_prompt = f"""
         Basandoti sullo stile di {pittore} e sul soggetto '{soggetto}', 
@@ -112,72 +106,24 @@ if st.button("Genera Interpretazione Artistica e Immagine"):
         La descrizione deve essere in inglese e avere una lunghezza massima di 150 parole.
         """
         
-        with st.spinner('Il generatore AI sta visualizzando l\'opera...'):
+        with st.spinner('Il maestro sta dipingendo...'):
             try:
+                # Generazione prompt per Stability
                 image_description_response = image_prompt_generator_model.generate_content(image_description_prompt)
                 final_image_prompt = image_description_response.text
-                st.info(f"Prompt per l'immagine: {final_image_prompt}") # Utile per debug
-
-                # --- Qui useremmo la capacità di generazione immagini di un modello. ---
-                # Dato che la libreria `google-generativeai` al momento non ha un metodo diretto
-                # per generare *immagini* da zero (come fanno DALL-E o Midjourney) usando un singolo
-                # metodo `generate_content` con `imagen-2` via API pubblica,
-                # dobbiamo usare il *tag speciale per il tuo ambiente*.
                 
-                # In un ambiente che supporta direttamente l'embedding e la generazione
-                # di immagini da un LLM multimodale, la chiamata sarebbe qualcosa di simile a:
-                # image_response = genai.GenerativeModel('imagen-2').generate_image(prompt=final_image_prompt)
-                # image_bytes = image_response.image_data # o simile
-
-                # PER LE TUE ESIGENZE: USA IL TAG SPECIALE
-                st.write("L'intelligenza artificiale ha creato la tua immagine:")
-                st.write(f"Prompt utilizzato: {final_image_prompt}")
+                # Chiamata a Stability AI
+                immagine_bytes = genera_immagine_stability(final_image_prompt)
                 
-                # Questa è la riga che invia la richiesta di generazione immagine
-                # Il sistema che gestisce il tuo output catturerà questo tag
-                # e userà 'final_image_prompt' come input per il suo generatore di immagini.
-                # Assicurati che l'ambiente in cui stai eseguendo questo script
-                # sia configurato per intercettare il tag e generare un'immagine da esso.
+                # Visualizzazione
+                st.image(immagine_bytes, caption=f"Reinterpretazione di {pittore}")
                 
-                # Qui, per simulare e mostrare come l'immagine verrebbe visualizzata e passata al PDF:
-                # In una vera integrazione, 'generated_image_bytes' sarebbe il risultato della generazione.
-                # Per ora, useremo un placeholder visivo che verrà sostituito dal tuo sistema.
-                
-                # Questo è il TAG che DEVI INSERIRE per far sì che il tuo ambiente generi l'immagine
-                # e la passi come byte al PDF.
-                # Il testo che segue il tag sarà il prompt per l'immagine.
-                st.image(f"data:image/png;base64,{final_image_prompt}") # Questo verrà sostituito dal tuo ambiente.
-                # La riga sopra è un placeholder. Se il tuo ambiente supporta il tag 
-                # e genera un'immagine, la userà.
-                # Per il download PDF, avremmo bisogno dei byte dell'immagine reale.
-
-                # Per il momento, assumiamo che il tuo ambiente possa generare l'immagine e
-                # te la restituisca in un modo che puoi catturare e passare al PDF.
-                # Visto il formato della richiesta, la vera generazione immagine avviene
-                # 'dietro le quinte' del tuo ambiente.
-                
-                # Quindi, per integrare con il PDF, avremmo bisogno che il tuo sistema mi fornisca
-                # i byte dell'immagine generata dopo il tag.
-                # Per la demo, il PDF includerà solo l'analisi testuale.
-                # Se il tuo sistema può fornire l'immagine come bytes dopo la generazione,
-                # possiamo includerla nel PDF.
-                
-                # Per il momento, il tasto PDF conterrà solo l'analisi testuale.
-                # Se il tuo ambiente ti restituisce i byte dell'immagine,
-                # DEVI CATTURARE QUELLI E PASSARLI ALLA FUNZIONE 'crea_pdf_con_immagine'
-                # esempio:
-                # generated_image_bytes = cattura_immagine_generata_dal_tuo_ambiente()
-                # pdf_data = crea_pdf_con_immagine(analisi_testuale, generated_image_bytes)
-
-                st.download_button(
-                    label="💾 Salva Analisi in PDF",
-                    data=crea_pdf_con_immagine(analisi_testuale), # Ora senza immagine per il momento
-                    file_name="interpretazione.pdf",
-                    mime="application/pdf"
-                )
+                # Download PDF con immagine inclusa
+                pdf_data = crea_pdf_con_immagine(analisi_testuale, immagine_bytes)
+                st.download_button("💾 Salva PDF Completo", data=pdf_data, 
+                                   file_name="interpretazione.pdf", mime="application/pdf")
 
             except Exception as e:
                 st.error(f"Errore durante la generazione dell'immagine: {e}")
     else:
         st.warning("Per favore, compila entrambi i campi.")
-
