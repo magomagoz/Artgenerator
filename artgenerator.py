@@ -6,18 +6,18 @@ from fpdf import FPDF
 genai.configure(api_key=st.secrets["API_KEY"])
 
 # Funzione per trovare il modello giusto
-def get_available_model():
-    for m in genai.list_models():
-        if 'generateContent' in m.supported_generation_methods:
-            return m.name
-    return None
+#def get_available_model():
+    #for m in genai.list_models():
+        #if 'generateContent' in m.supported_generation_methods:
+            #return m.name
+    #return None
 
-model_name = get_available_model()
-model = genai.GenerativeModel(model_name)
+#model_name = get_available_model()
+#model = genai.GenerativeModel(model_name)
 
-st.sidebar.write(f"Modello in uso: {model_name}") # Ti aiuterà a capire cosa sta succedendo
+#st.sidebar.write(f"Modello in uso: {model_name}") # Ti aiuterà a capire cosa sta succedendo
 
-#model = genai.GenerativeModel('gemini-1.5-pro') # Versione più moderna e veloce
+model = genai.GenerativeModel('gemini-2.5-flash') # Versione più moderna e veloce
 
 st.set_page_config(page_title="Interpretazioni d'Arte", page_icon="🎨", layout = "wide")
 st.image("banner.png")
