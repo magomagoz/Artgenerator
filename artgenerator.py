@@ -57,11 +57,11 @@ st.image("banner.png")
 
 # --- Controlli Input ---
 col1, col2 = st.columns(2)
-pittore = col1.text_input("Pittore (es. Vincent van Gogh)")
-soggetto = col2.text_input("Soggetto (es. un telefono cellulare)")
+pittore = col1.text_input("Scegli un Pittore")
+soggetto = col2.text_input("Soggetto da interpretare")
 
 # --- Bottone Genera ---
-if st.button("Genera Interpretazione Artistica e Immagine"):
+if st.button("Genera Interpretazione Artistica"):
     if pittore and soggetto:
         # --- Generazione Testuale ---
         st.subheader("### Analisi Testuale")
