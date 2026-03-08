@@ -27,25 +27,44 @@ def genera_immagine_stability(prompt):
     else:
         raise Exception(f"Errore Stability AI: {response.text}")
 
-# --- Funzione PDF ---
+# --- Funzione PDF Avanzata ---
 class PDF(FPDF):
     def header(self):
-        self.set_font('Arial', 'B', 12)
-        self.cell(0, 10, 'Analisi Artistica e Opera Generata', 0, 1, 'C')
+        # Titolo grande nella prima pagina
+        if self.page_no() == 1:
+            self.set_font('Arial', 'B', 24)
+            self.cell(0, 20, 'IL PENNELLO DEL TEMPO', 0, 1, 'C')
+            self.ln(10)
+    
+    def footer(self):
+        self.set_y(-15)
+        self.set_font('Arial', 'I', 8)
+        self.cell(0, 10, f'Pagina {self.page_no()}', 0, 0, 'C')
 
-def crea_pdf_con_immagine(testo_analisi, immagine_bytes=None):
+def crea_pdf_completo(pittore, soggetto, testo_analisi, immagine_bytes):
     pdf = PDF()
+    
+    # --- PAGINA 1: ANALISI ---
     pdf.add_page()
+    pdf.set_font("Arial", 'B', 16)
+    pdf.cell(0, 10, f"Soggetto: {soggetto} nello stile di {pittore}", 0, 1, 'L')
+    pdf.ln(5)
+    
     pdf.set_font("Arial", size=12)
-    pdf.multi_cell(0, 10, txt=testo_analisi.encode('latin-1', 'replace').decode('latin-1'))
+    # Pulizia testo per PDF (evita errori caratteri speciali)
+    testo_pulito = testo_analisi.encode('latin-1', 'replace').decode('latin-1')
+    pdf.multi_cell(0, 10, txt=testo_pulito)
 
+    # --- PAGINA 2: IMMAGINE LANDSCAPE ---
     if immagine_bytes:
-        pdf.ln(10)
-        pdf.set_font("Arial", 'B', 12)
-        pdf.cell(0, 10, 'Opera Generata:', 0, 1, 'L')
+        # Aggiungiamo una pagina in orientamento Landscape ('L')
+        pdf.add_page(orientation='L')
         with open("temp_image.png", "wb") as f:
             f.write(immagine_bytes)
-        pdf.image("temp_image.png", x=10, w=100)
+        
+        # Inseriamo l'immagine a tutta pagina (Landscape A4 è ~297mm x 210mm)
+        # Lasciamo un piccolo margine di 10mm
+        pdf.image("temp_image.png", x=10, y=10, w=277) 
         os.remove("temp_image.png")
     
     return pdf.output(dest='S').encode('latin-1')
@@ -53,7 +72,19 @@ def crea_pdf_con_immagine(testo_analisi, immagine_bytes=None):
 # --- Configurazione Pagina Streamlit ---
 st.set_page_config(page_title="Il Pennello del Tempo", page_icon="🎨", layout="wide")
 st.image("banner.png")
-#st.title("🎨 Il Pennello del Tempo: Analisi & Creazione")
+
+st.divider()
+st.title("🎨 Il Pennello del Tempo: Analisi & Creazione")
+
+# --- Inizializzazione Session State ---
+if 'analisi_generata' not in st.session_state:
+    st.session_state.analisi_generata = None
+if 'immagine_generata' not in st.session_state:
+    st.session_state.immagine_generata = None
+if 'pittore_corrente' not in st.session_state:
+    st.session_state.pittore_corrente = ""
+if 'soggetto_corrente' not in st.session_state:
+    st.session_state.soggetto_corrente = ""
 
 # --- Controlli Input ---
 col1, col2 = st.columns(2)
@@ -64,7 +95,7 @@ soggetto = col2.text_input("Soggetto da interpretare")
 if st.button("Genera Interpretazione Artistica"):
     if pittore and soggetto:
         # --- Generazione Testuale ---
-        st.subheader("### Analisi Testuale")
+        st.subheader("🖋️ Analisi Testuale")
         text_model = genai.GenerativeModel('gemini-2.5-flash')
 
         text_prompt = f"""
@@ -91,7 +122,7 @@ if st.button("Genera Interpretazione Artistica"):
         st.divider()
         
         # --- Generazione Immagine ---
-        st.subheader("### Opera Generata")
+        st.subheader("🖼️ Opera Generata")
         image_prompt_generator_model = genai.GenerativeModel('gemini-2.5-flash')
         
         image_description_prompt = f"""
@@ -119,11 +150,21 @@ if st.button("Genera Interpretazione Artistica"):
                 # Visualizzazione
                 st.image(immagine_bytes, caption=f"Reinterpretazione di {pittore}")
                 
-                # Download PDF con immagine inclusa
-                pdf_data = crea_pdf_con_immagine(analisi_testuale, immagine_bytes)
-                st.download_button("💾 Salva PDF Completo", data=pdf_data, 
-                                   file_name="interpretazione.pdf", mime="application/pdf")
-
+                # Generazione PDF
+                pdf_data = crea_pdf_completo(
+                    st.session_state.pittore_corrente,
+                    st.session_state.soggetto_corrente,
+                    st.session_state.analisi_generata,
+                    st.session_state.immagine_generata
+                )
+                
+                st.download_button(
+                    label="💾 Scarica PDF Artistico",
+                    data=pdf_data,
+                    file_name=f"{st.session_state.pittore_corrente}_{st.session_state.soggetto_corrente}.pdf",
+                    mime="application/pdf"
+                )
+                
             except Exception as e:
                 st.error(f"Errore durante la generazione dell'immagine: {e}")
     else:
