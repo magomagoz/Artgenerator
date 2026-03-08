@@ -7,7 +7,7 @@ genai.configure(api_key="TUA_API_KEY")
 model = genai.GenerativeModel('gemini-1.5-flash') # Versione più moderna e veloce
 
 st.set_page_config(page_title="Interpretazioni d'Arte", page_icon="🎨")
-st.image("banner.png")
+st.image("banner.png", layout = wide)
 #st.title("🎨 Il Pennello del Tempo")
 
 def crea_pdf(testo):
