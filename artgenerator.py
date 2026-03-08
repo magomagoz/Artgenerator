@@ -48,7 +48,7 @@ if st.button("Genera Interpretazione Artistica e Immagine"):
     if pittore and soggetto:
         # --- Generazione Testuale ---
         st.subheader("### Analisi Testuale")
-        text_model = genai.GenerativeModel('gemini-1.5-pro') # O 'gemini-pro' se preferisci
+        text_model = genai.GenerativeModel('gemini-2.5-flash')
 
         text_prompt = f"""
         Sei un critico d'arte ed esperto di tecniche pittoriche storiche. 
@@ -85,7 +85,7 @@ if st.button("Genera Interpretazione Artistica e Immagine"):
         # Idealmente, qui useresti un modello specifico per immagini (es. 'imagen-2' se accessibile).
         
         # Generiamo un prompt descrittivo dall'LLM testuale per un ipotetico generatore di immagini
-        image_prompt_generator_model = genai.GenerativeModel('gemini-1.5-pro')
+        image_prompt_generator_model = genai.GenerativeModel('gemini-2.5-flash')
         
         image_description_prompt = f"""
         Basandoti sullo stile di {pittore} e sul soggetto '{soggetto}', 
