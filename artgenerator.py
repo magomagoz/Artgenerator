@@ -140,22 +140,21 @@ if st.button("Genera Interpretazione Artistica"):
         # 2. GENERAZIONE IMMAGINE
         if analisi_testuale:
             st.subheader("🖼️ Opera Generata")
-            img_gen_model = genai.GenerativeModel('gemini-2.5-flash')
+            #img_gen_model = genai.GenerativeModel('gemini-2.5-flash')
             
             img_prompt_desc = f"Create a detailed English prompt for an AI image generator: '{soggetto}' painted by {pittore}. Focus on brushwork, colors and lighting."
             
             with st.spinner('Il maestro sta dipingendo...'):
+                
                 try:
                     img_desc_res = img_gen_model.generate_content(img_prompt_desc)
                     final_prompt = img_desc_res.text
                     
-                    # Chiamata a Stability
-                    immagine_bytes = genera_immagine_stability(final_prompt)
+                    # CHIAMA IL NUOVO SERVIZIO
+                    immagine_bytes = genera_immagine_huggingface(final_prompt)
                     
-                    # SALVATAGGIO NELLO STATO
+                    # Il resto rimane uguale...
                     st.session_state.immagine_generata = immagine_bytes
-                    
-                    # VISUALIZZAZIONE
                     st.image(immagine_bytes, caption=f"Interpretazione di {pittore}")
                     
                     # GENERAZIONE PDF (usiamo le variabili locali appena create per evitare il NoneType)
