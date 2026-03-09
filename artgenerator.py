@@ -95,8 +95,9 @@ if st.button("Genera Visione Artistica"):
     if p_in and s_in:
         with st.spinner(f"Sto chiedendo a {p_in} di dipingere..."):
             try:
-                # Generiamo testo e immagine
-                txt = chiama_huggingface_testo(p_in, s_in)
+                # CORREZIONE QUI: Usa il nuovo nome della funzione con cascata
+                txt = genera_analisi_robusta(p_in, s_in) 
+                
                 img = genera_immagine_huggingface(p_in, s_in)
                 st.session_state.res = {"t": txt, "i": img, "p": p_in, "s": s_in}
             except Exception as e:
