@@ -29,8 +29,8 @@ HF_API_KEY = st.secrets["HF_API_KEY"]
         #raise Exception(f"Errore Stability AI: {response.text}")
 
 def genera_immagine_huggingface(prompt):
-    # Usiamo un modello potente e gratuito su Hugging Face
-    api_url = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0"
+    # Nuovo URL aggiornato secondo le nuove direttive di Hugging Face
+    api_url = "https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0"
     headers = {"Authorization": f"Bearer {st.secrets['HF_API_KEY']}"}
     
     payload = {"inputs": prompt}
@@ -40,6 +40,7 @@ def genera_immagine_huggingface(prompt):
         return response.content
     else:
         raise Exception(f"Errore Hugging Face: {response.text}")
+
 
 
 # --- Funzione PDF Avanzata ---
