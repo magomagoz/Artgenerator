@@ -71,6 +71,7 @@ def crea_pdf(pittore, soggetto, analisi, img_bytes):
 
 # --- UI ---
 st.set_page_config(page_title="Il Pennello del Tempo", layout="wide")
+st.image("banner.png")
 st.title("🎨 Il Pennello del Tempo")
 
 if 'res' not in st.session_state: st.session_state.res = None
