@@ -112,67 +112,50 @@ soggetto = col2.text_input("Soggetto da interpretare")
 # --- Bottone Genera ---
 if st.button("Genera Interpretazione Artistica"):
     if pittore and soggetto:
-        # 1. GENERAZIONE TESTUALE
-        st.subheader("🖋️ Analisi Testuale")
-        # CORREZIONE: Il modello corretto è gemini-2.5-flash
-        text_model = genai.GenerativeModel('gemini-2.5-flash')
-
-        text_prompt = f"""
-        Sei un critico d'arte ed esperto di tecniche pittoriche storiche. 
-        Analizza il soggetto '{soggetto}' come se fosse stato dipinto da {pittore}.
-        Struttura la risposta in tre punti: Analisi Tecnica, Composizione, Interpretazione concettuale.
-        """
+        # Inizializziamo analisi_testuale come stringa vuota o messaggio di cortesia
+        analisi_testuale = "Analisi non disponibile (limite di quota raggiunto), ma ecco la tua opera!"
         
-        with st.spinner('Analizzando lo stile del maestro...'):
+        # 1. TENTATIVO GENERAZIONE TESTUALE (Gemini)
+        with st.spinner('Interpellando il critico d\'arte...'):
             try:
+                # Se 2.5 funziona per te, manteniamo quello
+                text_model = genai.GenerativeModel('gemini-2.5-flash')
+                text_prompt = f"Analizza brevemente '{soggetto}' nello stile di {pittore}."
                 text_response = text_model.generate_content(text_prompt)
                 analisi_testuale = text_response.text
-                st.markdown(analisi_testuale)
                 
-                # SALVATAGGIO IMMEDIATO NELLO STATO
+                # Salviamo nello stato solo se ha successo
                 st.session_state.analisi_generata = analisi_testuale
-                st.session_state.pittore_corrente = pittore
-                st.session_state.soggetto_corrente = soggetto
-                
+                st.subheader("🖋️ Analisi Testuale")
+                st.markdown(analisi_testuale)
             except Exception as e:
-                st.error(f"Errore Analisi: {e}")
-                analisi_testuale = None
+                # Se Gemini va in errore 429, mostriamo un avviso ma NON fermiamo lo script
+                st.warning("Il critico d'arte è occupato (quota piena), procedo direttamente con il dipinto!")
+                st.session_state.analisi_generata = analisi_testuale # Messaggio di fallback
 
         st.divider()
         
-        # 2. GENERAZIONE IMMAGINE (Senza chiamare Gemini per il prompt)
-        if analisi_testuale:
-            st.subheader("🖼️ Opera Generata")
-            
-            # Creiamo il prompt in inglese direttamente qui
-            # Questo risparmia una chiamata a Gemini e non consuma quota!
-            final_prompt = f"A high-quality professional oil painting of {soggetto} in the unique artistic style of {pittore}, masterpiece, detailed brushwork."
-            
-            with st.spinner('Il maestro sta dipingendo... (via Hugging Face)'):
-                try:
-                    # Chiamata diretta a Hugging Face
-                    immagine_bytes = genera_immagine_huggingface(final_prompt)
-                    
-                    # SALVATAGGIO NELLO STATO
-                    st.session_state.immagine_generata = immagine_bytes
-                    
-                    # VISUALIZZAZIONE
-                    st.image(immagine_bytes, caption=f"Interpretazione di {pittore}")
-                    
-                    # GENERAZIONE PDF
-                    pdf_data = crea_pdf_completo(
-                        pittore,
-                        soggetto,
-                        analisi_testuale,
-                        immagine_bytes
-                    )
-                    
-                    st.download_button(
-                        label="💾 Scarica PDF Artistico",
-                        data=pdf_data,
-                        file_name=f"{pittore}_{soggetto}.pdf",
-                        mime="application/pdf"
-                    )
-                    
-                except Exception as e:
-                    st.error(f"Errore Immagine: {e}")
+        # 2. GENERAZIONE IMMAGINE (Sempre eseguita)
+        st.subheader("🖼️ Opera Generata")
+        # Prompt costruito direttamente per non usare Gemini (Zero Quota)
+        final_prompt = f"A professional oil painting of {soggetto} in the style of {pittore}, masterpiece, high resolution."
+        
+        with st.spinner('Il maestro sta dipingendo...'):
+            try:
+                # Usiamo Hugging Face che è più generoso
+                immagine_bytes = genera_immagine_huggingface(final_prompt)
+                st.session_state.immagine_generata = immagine_bytes
+                st.image(immagine_bytes, caption=f"Interpretazione di {pittore}")
+                
+                # Salviamo i nomi correnti per il PDF
+                st.session_state.pittore_corrente = pittore
+                st.session_state.soggetto_corrente = soggetto
+                
+                # Generazione PDF (usando le variabili dello stato o locali)
+                pdf_data = crea_pdf_completo(pittore, soggetto, st.session_state.analisi_generata, immagine_bytes)
+                st.download_button("💾 Scarica PDF Artistico", data=pdf_data, 
+                                   file_name=f"{pittore}_{soggetto}.pdf", mime="application/pdf")
+            except Exception as e:
+                st.error(f"Errore Immagine: {e}")
+    else:
+        st.warning("Per favore, compila entrambi i campi.")
