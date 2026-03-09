@@ -75,15 +75,17 @@ def crea_pdf_completo(pittore, soggetto, testo_analisi, immagine_bytes):
     if immagine_bytes:
         # Aggiungiamo una pagina in orientamento Landscape ('L')
         pdf.add_page(orientation='L')
-        with open("temp_image.png", "wb") as f:
+        
+        # ---> CORREZIONE: usiamo .jpg invece di .png <---
+        with open("temp_image.jpg", "wb") as f:
             f.write(immagine_bytes)
         
-        # Inseriamo l'immagine a tutta pagina (Landscape A4 è ~297mm x 210mm)
-        # Lasciamo un piccolo margine di 10mm
-        pdf.image("temp_image.png", x=10, y=10, w=277) 
-        os.remove("temp_image.png")
+        # Inseriamo l'immagine a tutta pagina
+        pdf.image("temp_image.jpg", x=10, y=10, w=277) 
+        os.remove("temp_image.jpg")
     
     return pdf.output(dest='S').encode('latin-1')
+
 
 # --- Configurazione Pagina Streamlit ---
 st.set_page_config(page_title="Il Pennello del Tempo", page_icon="🎨", layout="wide")
