@@ -5,22 +5,30 @@ import os
 import requests
 
 # --- Configurazione API ---
-# Assicurati di avere HF_API_KEY nei Secrets di Streamlit
 HF_API_KEY = st.secrets["HF_API_KEY"]
 
-def chiama_huggingface_testo(prompt):
-    """Genera l'analisi testuale usando un modello LLM su Hugging Face."""
+def chiama_huggingface_testo(pittore, soggetto):
+    """Genera l'analisi testuale con un prompt strutturato per Mistral."""
     api_url = "https://router.huggingface.co/hf-inference/models/mistralai/Mistral-7B-Instruct-v0.3"
     headers = {"Authorization": f"Bearer {HF_API_KEY}"}
+    
+    # Prompt migliorato: diamo un ruolo preciso e istruzioni chiare
+    prompt_formattato = f"<s>[INST] Sei un critico d'arte esperto. Scrivi un'analisi di 150 parole in italiano su come l'artista {pittore} dipingerebbe il soggetto '{soggetto}'. Descrivi tecnica, colori e atmosfera. [/INST]"
+    
     payload = {
-        "inputs": f"<s>[INST] {prompt} [/INST]",
-        "parameters": {"max_new_tokens": 500, "temperature": 0.7}
+        "inputs": prompt_formattato,
+        "parameters": {"max_new_tokens": 500, "temperature": 0.7, "return_full_text": False}
     }
-    response = requests.post(api_url, headers=headers, json=payload)
-    if response.status_code == 200:
-        return response.json()[0]['generated_text'].split("[/INST]")[-1].strip()
-    else:
-        return "Analisi non disponibile al momento."
+    
+    try:
+        response = requests.post(api_url, headers=headers, json=payload)
+        if response.status_code == 200:
+            risultato = response.json()
+            return risultato[0]['generated_text'].strip()
+        else:
+            return f"Nota: Il critico è momentaneamente assente (Errore {response.status_code})."
+    except:
+        return "Connessione al critico d'arte fallita."
 
 def genera_immagine_huggingface(prompt):
     """Genera l'immagine usando Stable Diffusion XL."""
@@ -31,9 +39,9 @@ def genera_immagine_huggingface(prompt):
     if response.status_code == 200:
         return response.content
     else:
-        raise Exception(f"Errore Immagine: {response.text}")
+        raise Exception(f"Errore Generazione Immagine.")
 
-# --- Funzione PDF (già corretta per .jpg) ---
+# --- Classe PDF ---
 class PDF(FPDF):
     def header(self):
         if self.page_no() == 1:
@@ -62,61 +70,54 @@ def crea_pdf_completo(pittore, soggetto, testo_analisi, immagine_bytes):
 
 # --- UI Streamlit ---
 st.set_page_config(page_title="Il Pennello del Tempo", page_icon="🎨", layout="wide")
+
 if os.path.exists("banner.png"):
     st.image("banner.png")
 
-st.divider()
-
 st.title("🎨 Il Pennello del Tempo: Analisi & Creazione")
 
-# Inizializzazione Session State
-for key in ['analisi_generata', 'immagine_generata', 'pittore_corrente', 'soggetto_corrente']:
-    if key not in st.session_state: st.session_state[key] = None
+# Session State
+if 'analisi' not in st.session_state: st.session_state.analisi = None
+if 'immagine' not in st.session_state: st.session_state.immagine = None
+if 'pittore' not in st.session_state: st.session_state.pittore = ""
+if 'soggetto' not in st.session_state: st.session_state.soggetto = ""
 
-# --- Inizializzazione Session State ---
-if 'analisi_generata' not in st.session_state:
-    st.session_state.analisi_generata = None
-if 'immagine_generata' not in st.session_state:
-    st.session_state.immagine_generata = None
-if 'pittore_corrente' not in st.session_state:
-    st.session_state.pittore_corrente = ""
-if 'soggetto_corrente' not in st.session_state:
-    st.session_state.soggetto_corrente = ""
-
+# Input
 col1, col2 = st.columns(2)
-pittore = col1.text_input("Scegli un Pittore")
-soggetto = col2.text_input("Soggetto da interpretare")
+p_in = col1.text_input("Scegli un Pittore")
+s_in = col2.text_input("Soggetto da interpretare")
 
-if st.button("Genera Interpretazione Artistica"):
-    if pittore and soggetto:
-        # 1. ANALISI TESTUALE (Hugging Face)
-        with st.spinner('Il critico d\'arte sta scrivendo...'):
-            prompt_testo = f"Sei un esperto d'arte. Analizza il soggetto '{soggetto}' come se fosse dipinto da {pittore}. Parla di tecnica, colori e significato in italiano."
-            analisi = chiama_huggingface_testo(prompt_testo)
-            st.session_state.analisi_generata = analisi
-            st.session_state.pittore_corrente = pittore
-            st.session_state.soggetto_corrente = soggetto
-
-        # 2. IMMAGINE (Hugging Face)
-        with st.spinner('Il maestro sta dipingendo...'):
+if st.button("Genera Opera"):
+    if p_in and s_in:
+        with st.spinner('Analizzando e Dipingendo...'):
+            # 1. Testo
+            st.session_state.analisi = chiama_huggingface_testo(p_in, s_in)
+            # 2. Immagine
             try:
-                prompt_img = f"A professional oil painting of {soggetto} in the style of {pittore}, masterpiece, highly detailed."
-                img_bytes = genera_immagine_huggingface(prompt_img)
-                st.session_state.immagine_generata = img_bytes
+                prompt_img = f"A professional oil painting of {s_in} in the unique artistic style of {p_in}, masterpiece, highly detailed, vivid colors."
+                st.session_state.immagine = genera_immagine_huggingface(prompt_img)
+                st.session_state.pittore = p_in
+                st.session_state.soggetto = s_in
             except Exception as e:
-                st.error(f"Errore Immagine: {e}")
+                st.error(str(e))
+    else:
+        st.warning("Inserisci entrambi i dati.")
 
-# Visualizzazione Persistente
-if st.session_state.analisi_generata:
+# --- Layout di Visualizzazione ---
+if st.session_state.analisi:
     st.divider()
-    c1, c2 = st.columns(2)
-    with c1:
-        st.subheader("🖋️ Analisi Testuale")
-        st.write(st.session_state.analisi_generata)
-    with c2:
-        st.subheader("🖼️ Opera Generata")
-        st.image(st.session_state.immagine_generata)
+    
+    # 1. Analisi Sopra (A tutta larghezza)
+    st.subheader("🖋️ Analisi del Critico")
+    st.info(st.session_state.analisi)
+    
+    st.divider()
+    
+    # 2. Immagine Sotto (Grande)
+    if st.session_state.immagine:
+        st.subheader("🖼️ L'Opera d'Arte")
+        st.image(st.session_state.immagine, use_container_width=True)
         
-        pdf_data = crea_pdf_completo(st.session_state.pittore_corrente, st.session_state.soggetto_corrente, st.session_state.analisi_generata, st.session_state.immagine_generata)
-        st.download_button("💾 Scarica PDF Artistico", data=pdf_data, file_name=f"{st.session_state.pittore_corrente}.pdf", mime="application/pdf")
-
+        # Bottone Download
+        pdf_file = crea_pdf_completo(st.session_state.pittore, st.session_state.soggetto, st.session_state.analisi, st.session_state.immagine)
+        st.download_button("💾 Scarica il PDF (Analisi + Immagine Landscape)", data=pdf_file, file_name=f"{st.session_state.pittore}.pdf", mime="application/pdf")
