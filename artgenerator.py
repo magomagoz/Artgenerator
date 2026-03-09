@@ -140,27 +140,26 @@ if st.button("Genera Interpretazione Artistica"):
 
         st.divider()
         
-        # 2. GENERAZIONE IMMAGINE
+        # 2. GENERAZIONE IMMAGINE (Senza chiamare Gemini per il prompt)
         if analisi_testuale:
             st.subheader("🖼️ Opera Generata")
-            img_gen_model = genai.GenerativeModel('gemini-2.5-flash')
             
-            img_prompt_desc = f"Create a detailed English prompt for an AI image generator: '{soggetto}' painted by {pittore}. Focus on brushwork, colors and lighting."
+            # Creiamo il prompt in inglese direttamente qui
+            # Questo risparmia una chiamata a Gemini e non consuma quota!
+            final_prompt = f"A high-quality professional oil painting of {soggetto} in the unique artistic style of {pittore}, masterpiece, detailed brushwork."
             
-            with st.spinner('Il maestro sta dipingendo...'):
-                
+            with st.spinner('Il maestro sta dipingendo... (via Hugging Face)'):
                 try:
-                    img_desc_res = img_gen_model.generate_content(img_prompt_desc)
-                    final_prompt = img_desc_res.text
-                    
-                    # CHIAMA IL NUOVO SERVIZIO
+                    # Chiamata diretta a Hugging Face
                     immagine_bytes = genera_immagine_huggingface(final_prompt)
                     
-                    # Il resto rimane uguale...
+                    # SALVATAGGIO NELLO STATO
                     st.session_state.immagine_generata = immagine_bytes
+                    
+                    # VISUALIZZAZIONE
                     st.image(immagine_bytes, caption=f"Interpretazione di {pittore}")
                     
-                    # GENERAZIONE PDF (usiamo le variabili locali appena create per evitare il NoneType)
+                    # GENERAZIONE PDF
                     pdf_data = crea_pdf_completo(
                         pittore,
                         soggetto,
@@ -177,6 +176,3 @@ if st.button("Genera Interpretazione Artistica"):
                     
                 except Exception as e:
                     st.error(f"Errore Immagine: {e}")
-    else:
-        st.warning("Per favore, compila entrambi i campi.")
-        
