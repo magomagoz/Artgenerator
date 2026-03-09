@@ -56,17 +56,44 @@ class PDF(FPDF):
 
 def crea_pdf(pittore, soggetto, analisi, img_bytes):
     pdf = PDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-    # Pulizia caratteri speciali per evitare errori FPDF
-    testo_sicuro = analisi.encode('latin-1', 'replace').decode('latin-1')
-    pdf.multi_cell(0, 10, txt=f"{soggetto} - Stile: {pittore}\n\n{testo_sicuro}")
     
+    # --- PAGINA 1: ANALISI (Verticale) ---
+    pdf.add_page() # Default è 'P' (Portrait)
+    pdf.set_font("Arial", 'B', 16)
+    pdf.cell(0, 10, f"Soggetto: {soggetto} nello stile di {pittore}", 0, 1, 'L')
+    pdf.ln(5)
+    
+    pdf.set_font("Arial", size=12)
+    # Pulizia testo per PDF (evita errori caratteri speciali)
+    testo_pulito = analisi.encode('latin-1', 'replace').decode('latin-1')
+    # Usiamo multi_cell per mandare a capo il testo automaticamente
+    pdf.multi_cell(0, 10, txt=testo_pulito)
+
+    # --- PAGINA 2: IMMAGINE (Orizzontale - Landscape) ---
     if img_bytes:
+        # Aggiungiamo una nuova pagina specificando orientamento Orizzontale ('L')
+        # Una pagina A4 in orizzontale è larga circa 297mm e alta 210mm
         pdf.add_page(orientation='L')
-        with open("temp.jpg", "wb") as f: f.write(img_bytes)
-        pdf.image("temp.jpg", x=10, y=10, w=277)
-        os.remove("temp.jpg")
+        
+        # Salviamo l'immagine temporaneamente per FPDF
+        # Usiamo .jpg perché Hugging Face restituisce spesso JPEG
+        with open("temp_image.jpg", "wb") as f:
+            f.write(img_bytes)
+        
+        # Inseriamo l'immagine adattandola alla larghezza della pagina
+        # x=10, y=10 sono i margini superiore e sinistro (in mm)
+        # w=277 calcola la larghezza disponibile (297mm totale - 20mm di margini)
+        # L'altezza verrà calcolata automaticamente mantenendo le proporzioni
+        try:
+            pdf.image("temp_image.jpg", x=10, y=10, w=277) 
+        except Exception as e:
+            st.error(f"Errore inserimento immagine nel PDF: {e}")
+        finally:
+            # Rimuoviamo sempre il file temporaneo
+            if os.path.exists("temp_image.jpg"):
+                os.remove("temp_image.jpg")
+    
+    # Restituiamo i dati del PDF come bytes
     return pdf.output(dest='S').encode('latin-1')
 
 # --- UI ---
