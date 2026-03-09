@@ -7,25 +7,40 @@ import requests
 
 # --- Configurazione API ---
 genai.configure(api_key=st.secrets["API_KEY"])
-STABILITY_API_KEY = st.secrets["STABILITY_API_KEY"]
+#STABILITY_API_KEY = st.secrets["STABILITY_API_KEY"]
+HF_API_KEY = st.secrets["HF_API_KEY"]
 
-def genera_immagine_stability(prompt):
-    """Chiama l'API di Stability AI per generare un'immagine."""
-    url = "https://api.stability.ai/v2beta/stable-image/generate/core"
-    headers = {
-        "authorization": f"Bearer {STABILITY_API_KEY}",
-        "accept": "image/*"
-    }
-    files = {"none": ""}
-    data = {
-        "prompt": prompt,
-        "output_format": "png"
-    }
-    response = requests.post(url, headers=headers, files=files, data=data)
+#def genera_immagine_stability(prompt):
+    #"""Chiama l'API di Stability AI per generare un'immagine."""
+    #url = "https://api.stability.ai/v2beta/stable-image/generate/core"
+    #headers = {
+        #"authorization": f"Bearer {STABILITY_API_KEY}",
+        #"accept": "image/*"
+    #}
+    #files = {"none": ""}
+    #data = {
+        #"prompt": prompt,
+        #"output_format": "png"
+    #}
+    #response = requests.post(url, headers=headers, files=files, data=data)
+    #if response.status_code == 200:
+        #return response.content
+    #else:
+        #raise Exception(f"Errore Stability AI: {response.text}")
+
+def genera_immagine_huggingface(prompt):
+    # Usiamo un modello potente e gratuito su Hugging Face
+    api_url = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0"
+    headers = {"Authorization": f"Bearer {st.secrets['HF_API_KEY']}"}
+    
+    payload = {"inputs": prompt}
+    response = requests.post(api_url, headers=headers, json=payload)
+    
     if response.status_code == 200:
         return response.content
     else:
-        raise Exception(f"Errore Stability AI: {response.text}")
+        raise Exception(f"Errore Hugging Face: {response.text}")
+
 
 # --- Funzione PDF Avanzata ---
 class PDF(FPDF):
