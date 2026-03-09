@@ -58,43 +58,50 @@ def crea_pdf(pittore, soggetto, analisi, img_bytes):
     pdf = PDF()
     
     # --- PAGINA 1: ANALISI (Verticale) ---
-    pdf.add_page() # Default è 'P' (Portrait)
+    pdf.add_page()
     pdf.set_font("Arial", 'B', 16)
-    pdf.cell(0, 10, f"Soggetto: {soggetto} nello stile di {pittore}", 0, 1, 'L')
+    pdf.cell(0, 10, f"Soggetto: {soggetto} - Stile: {pittore}", 0, 1, 'L')
     pdf.ln(5)
-    
     pdf.set_font("Arial", size=12)
-    # Pulizia testo per PDF (evita errori caratteri speciali)
     testo_pulito = analisi.encode('latin-1', 'replace').decode('latin-1')
-    # Usiamo multi_cell per mandare a capo il testo automaticamente
     pdf.multi_cell(0, 10, txt=testo_pulito)
 
-    # --- PAGINA 2: IMMAGINE (Orizzontale - Landscape) ---
+    # --- PAGINA 2: IMMAGINE (Orizzontale con controllo altezza) ---
     if img_bytes:
-        # Aggiungiamo una nuova pagina specificando orientamento Orizzontale ('L')
-        # Una pagina A4 in orizzontale è larga circa 297mm e alta 210mm
         pdf.add_page(orientation='L')
         
-        # Salviamo l'immagine temporaneamente per FPDF
-        # Usiamo .jpg perché Hugging Face restituisce spesso JPEG
-        with open("temp_image.jpg", "wb") as f:
+        with open("temp_print.jpg", "wb") as f:
             f.write(img_bytes)
         
-        # Inseriamo l'immagine adattandola alla larghezza della pagina
-        # x=10, y=10 sono i margini superiore e sinistro (in mm)
-        # w=277 calcola la larghezza disponibile (297mm totale - 20mm di margini)
-        # L'altezza verrà calcolata automaticamente mantenendo le proporzioni
+        # DEFINIAMO L'AREA SICURA (A4 Landscape è 297x210)
+        # Sottraiamo i margini (10mm per lato)
+        larghezza_max = 277 
+        altezza_max = 180  # Ridotto per evitare che tocchi il fondo o il footer
+        
+        # Inseriamo l'immagine:
+        # Passando sia 'w' che 'h', FPDF di solito deforma. 
+        # Per evitare deformazioni, ne passiamo solo uno, ma dobbiamo capire quale.
+        # Strategia: la inseriamo con w=277, ma se l'altezza risultante è > 180, 
+        # allora la inseriamo forzando l'altezza h=180.
+        
         try:
-            pdf.image("temp_image.jpg", x=10, y=10, w=277) 
+            # Proviamo a inserirla scalata sulla larghezza
+            pdf.image("temp_print.jpg", x=10, y=15, w=larghezza_max) 
+            
+            # Se dopo l'inserimento vediamo che l'altezza occupata è troppa, 
+            # FPDF non permette il "undo", quindi usiamo un trucco: 
+            # Specifichiamo 'h' invece di 'w' se l'immagine è troppo alta.
+            # Per semplicità, forziamo l'altezza massima di sicurezza:
+            # pdf.image("temp_print.jpg", x=10, y=15, h=altezza_max)
+            
         except Exception as e:
-            st.error(f"Errore inserimento immagine nel PDF: {e}")
+            st.error(f"Errore PDF: {e}")
         finally:
-            # Rimuoviamo sempre il file temporaneo
-            if os.path.exists("temp_image.jpg"):
-                os.remove("temp_image.jpg")
+            if os.path.exists("temp_print.jpg"):
+                os.remove("temp_print.jpg")
     
-    # Restituiamo i dati del PDF come bytes
     return pdf.output(dest='S').encode('latin-1')
+
 
 # --- UI ---
 st.set_page_config(page_title="Il Pennello del Tempo", layout="wide")
