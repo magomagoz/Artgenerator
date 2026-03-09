@@ -8,22 +8,36 @@ import time
 # --- Configurazione API ---
 HF_API_KEY = st.secrets["HF_API_KEY"]
 
-def chiama_huggingface_testo(pittore, soggetto):
-    """Genera un'analisi stilistica con gestione degli errori."""
-    api_url = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
-    headers = {"Authorization": f"Bearer {HF_API_KEY}"}
+def genera_analisi_robusta(pittore, soggetto):
+    """Prova Hugging Face, se fallisce passa a Gemini."""
     
-    prompt = f"<s>[INST] Sei un critico d'arte. Descrivi in italiano lo stile unico di {pittore} applicato al soggetto '{soggetto}'. [/INST]"
-    payload = {"inputs": prompt, "parameters": {"max_new_tokens": 300}}
-    
+    # --- TENTATIVO 1: HUGGING FACE (Mistral) ---
     try:
-        # Tentativo di chiamata con timeout
-        response = requests.post(api_url, headers=headers, json=payload, timeout=15)
+        api_url = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
+        headers = {"Authorization": f"Bearer {st.secrets['HF_API_KEY']}"}
+        prompt = f"<s>[INST] Sei un critico d'arte. Analizza in italiano lo stile di {pittore} su '{soggetto}'. [/INST]"
+        
+        response = requests.post(api_url, headers=headers, json={"inputs": prompt}, timeout=10)
         if response.status_code == 200:
             return response.json()[0]['generated_text'].split("[/INST]")[-1].strip()
-        return f"L'opera riflette l'approccio di {pittore} verso {soggetto}."
     except:
-        return "Analisi non disponibile per sovraccarico server."
+        pass # Se HF fallisce, non fare nulla e passa oltre
+
+    # --- TENTATIVO 2: GEMINI (Google) ---
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=st.secrets["API_KEY"])
+        # Usiamo 2.5 o 1.5 a seconda di quale hai verificato funzionante
+        model = genai.GenerativeModel('gemini-1.5-flash') 
+        prompt = f"Analizza brevemente '{soggetto}' nello stile di {pittore}."
+        response = model.generate_content(prompt)
+        return response.text
+    except:
+        pass
+
+    # --- TENTATIVO 3: RISPOSTA DI EMERGENZA (Senza AI) ---
+    return f"L'opera rappresenta {soggetto} attraverso il filtro estetico unico di {pittore}, con particolare attenzione alla forma e al colore."
+
 
 def genera_immagine_huggingface(pittore, soggetto):
     """Genera l'immagine con tentativi automatici in caso di server occupato."""
