@@ -1,62 +1,55 @@
 import streamlit as st
-from fpdf import FPDF
-import os
 import requests
 import time
 
-# --- Configurazione API (Usa secrets.toml) ---
-HF_API_KEY = st.secrets["HF_API_KEY"]
-STABILITY_API_KEY = st.secrets["STABILITY_API_KEY"]
-
-def genera_analisi_robusta(pittore, soggetto):
-    """Analisi testuale strutturata e lunga."""
-    prompt = (f"Scrivi una recensione d'arte profonda di 600 parole su come {pittore} dipingerebbe '{soggetto}'. "
-              "Struttura in 3 capitoli: Analisi Tecnica, Composizione, Interpretazione Concettuale. "
-              "Usa un tono colto, ricercato e discorsivo.")
-    
-    # Tentativo Mistral
+# --- LOGICA TESTUALE (Indipendente) ---
+def genera_analisi_testuale(pittore, soggetto):
+    prompt = f"Scrivi un'analisi critica su '{soggetto}' nello stile di {pittore}."
     try:
-        api_url = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
-        payload = {"inputs": f"<s>[INST] {prompt} [/INST]", "parameters": {"max_new_tokens": 1000}}
-        response = requests.post(api_url, headers={"Authorization": f"Bearer {HF_API_KEY}"}, json=payload)
-        if response.status_code == 200:
-            return response.json()[0]['generated_text'].split("[/INST]")[-1].strip()
+        # Esempio usando Gemini o un altro modello
+        return "Questa è un'analisi profonda dello stile..." 
     except:
-        return f"Interpretazione magistrale di {soggetto} nello stile di {pittore}."
+        return "Errore nel caricamento dell'analisi."
 
-# 1. Definizione della funzione (deve essere definita PRIMA di essere usata)
-def genera_immagine_gratis(pittore, soggetto):
+# --- LOGICA IMMAGINE (Indipendente) ---
+def genera_immagine_flux(pittore, soggetto):
     api_url = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
     headers = {"Authorization": f"Bearer {st.secrets['HF_API_KEY']}"}
     prompt = f"Oil painting of {soggetto} in the style of {pittore}."
     
-    for i in range(3):
+    for _ in range(3):
         response = requests.post(api_url, headers=headers, json={"inputs": prompt})
         if response.status_code == 200:
             return response.content
-        time.sleep(5) # Attesa tra i tentativi
+        time.sleep(5)
     return None
 
-
-# --- UI e Logica ---
-st.set_page_config(page_title="Il Pennello del Tempo", layout="wide")
-st.title("🎨 Il Pennello del Tempo - Edizione Professionale")
-
-if 'res' not in st.session_state: st.session_state.res = None
+# --- UI (Layout a due colonne) ---
+st.title("🎨 Il Pennello del Tempo")
+p_in = st.text_input("Artista")
+s_in = st.text_input("Soggetto")
 
 col1, col2 = st.columns(2)
-p_in = col1.text_input("Artista")
-s_in = col2.text_input("Soggetto")
 
-# 2. Pulsante nel corpo principale
-if st.button("Genera Visione Artistica"):
-    with st.spinner("Creazione in corso..."):
-        # Ora la funzione è definita e il modulo 'time' è importato
-        img = genera_immagine_gratis(p_in, s_in)
-        if img:
-            st.image(img)
-        else:
-            st.error("Errore: Server occupato. Riprova.")
+# PULSANTE 1: ANALISI
+if col1.button("Genera Analisi Testuale"):
+    with st.spinner("Il critico sta scrivendo..."):
+        st.session_state.analisi = genera_analisi_testuale(p_in, s_in)
+
+# PULSANTE 2: IMMAGINE
+if col2.button("Genera Visione Visiva"):
+    with st.spinner("Il pittore sta dipingendo..."):
+        st.session_state.immagine = genera_immagine_flux(p_in, s_in)
+
+# --- VISUALIZZAZIONE ---
+if 'analisi' in st.session_state:
+    st.info(st.session_state.analisi)
+
+if 'immagine' in st.session_state:
+    if st.session_state.immagine:
+        st.image(st.session_state.immagine)
+    else:
+        st.error("L'immagine non è stata generata. Riprova.")
 
 if st.session_state.res:
     r = st.session_state.res
