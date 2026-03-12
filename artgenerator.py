@@ -144,9 +144,9 @@ if st.button("Genera Visione Artistica"):
                     file_name="interpretazione.pdf",
                     mime="application/pdf"
                 )
-
-    except Exception as e:
-        st.error(f"Errore durante la generazione dell'immagine: {e}")
+        
+        except Exception as e:
+            st.error(f"Errore durante la generazione dell'immagine: {e}")
 
 if st.session_state.res:
     r = st.session_state.res
