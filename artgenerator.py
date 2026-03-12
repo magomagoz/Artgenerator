@@ -8,13 +8,58 @@ import time
 # --- Configurazione API ---
 HF_API_KEY = st.secrets["HF_API_KEY"]
 
+# --- Bottone Genera ---
+if st.button("Genera Interpretazione Artistica e Immagine"):
+    if pittore and soggetto:
+        # --- Generazione Testuale ---
+        st.subheader("### Analisi Testuale")
+        text_model = genai.GenerativeModel('gemini-2.5-flash')
+
+        text_prompt = f"""
+        Sei un critico d'arte ed esperto di tecniche pittoriche storiche. 
+        Analizza il soggetto '{soggetto}' come se fosse stato dipinto da {pittore}.
+        
+        Struttura la risposta in tre punti:
+        1. **Analisi Tecnica**: Descrivi la pennellata, l'uso del colore e la luce tipica dell'autore.
+        2. **Composizione**: Spiega come verrebbe impostata la scena.
+        3. **Interpretazione concettuale**: Spiega perché questa scelta stilistica valorizza il soggetto.
+        
+        Mantieni un tono accademico ma ispirato.
+        """
+        
+        with st.spinner('Analizzando lo stile del maestro...'):
+            try:
+                text_response = text_model.generate_content(text_prompt)
+                analisi_testuale = text_response.text
+                st.markdown(analisi_testuale)
+            except Exception as e:
+                st.error(f"Errore durante la generazione dell'analisi testuale: {e}")
+                analisi_testuale = "Errore durante la generazione dell'analisi." # Per evitare errori nel PDF
+
+        st.divider() # Separatore visivo
+
+
+
+
 def genera_analisi_robusta(pittore, soggetto):
     """Prova Hugging Face, se fallisce passa a Gemini."""
     # 1. TENTATIVO HUGGING FACE
     try:
         api_url = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
         headers = {"Authorization": f"Bearer {HF_API_KEY}"}
-        prompt = f"<s>[INST] Sei un critico d'arte. Analizza in italiano lo stile di {pittore} su '{soggetto}'. [/INST]"
+        
+        prompt = f"""
+        Sei un critico d'arte ed esperto di tecniche pittoriche storiche. 
+        Analizza il soggetto '{soggetto}' come se fosse stato dipinto da {pittore}.
+        
+        Struttura la risposta in tre punti:
+        1. **Analisi Tecnica**: Descrivi la pennellata, l'uso del colore e la luce tipica dell'autore.
+        2. **Composizione**: Spiega come verrebbe impostata la scena.
+        3. **Interpretazione concettuale**: Spiega perché questa scelta stilistica valorizza il soggetto.
+        
+        Mantieni un tono accademico ma ispirato.
+        """
+        
         response = requests.post(api_url, headers=headers, json={"inputs": prompt}, timeout=10)
         if response.status_code == 200:
             return response.json()[0]['generated_text'].split("[/INST]")[-1].strip()
@@ -36,7 +81,18 @@ def genera_immagine_huggingface(pittore, soggetto):
     # Usiamo l'URL corretto richiesto da HF
     api_url = "https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0"
     headers = {"Authorization": f"Bearer {HF_API_KEY}"}
-    prompt = f"A masterpiece oil painting of {soggetto} in the style of {pittore}, detailed."
+    prompt = f"""
+        Basandoti sullo stile di {pittore} e sul soggetto '{soggetto}', 
+        crea una descrizione dettagliata per un generatore di immagini AI. 
+        La descrizione deve includere dettagli su:
+        - tipo di immagine (dipinto ad olio, acquerello, scultura, ecc.)
+        - colori dominanti e tavolozza
+        - composizione e inquadratura
+        - illuminazione e atmosfera
+        - elementi specifici del pittore (es. pennellate, figure distorte, chiaroscuro)
+        - dettagli sul soggetto '{soggetto}' nel contesto di quello stile.
+        La descrizione deve essere in inglese e avere una lunghezza massima di 150 parole.
+        """
     
     for _ in range(3):
         try:
@@ -130,6 +186,23 @@ if st.button("Genera Visione Artistica"):
                 }
             else:
                 st.error("Errore generazione immagine. Riprova.")
+
+        with st.spinner('Il maestro sta dipingendo...'):
+            immagine = genera_immagine_vertex(final_image_prompt)
+            # Visualizzazione
+            st.image(immagine.image_bytes, caption=f"Reinterpretazione di {pittore}")
+            
+            # Download PDF con immagine inclusa
+            pdf_data = crea_pdf_con_immagine(analisi_testuale, immagine.image_bytes)
+            st.download_button("💾 Salva PDF Completo", data=crea_pdf_con_immagine(analisi_testuale), # Ora senza immagine per il momento
+                    file_name="interpretazione.pdf",
+                    mime="application/pdf"
+                )
+
+            except Exception as e:
+                st.error(f"Errore durante la generazione dell'immagine: {e}")
+    else:
+        st.warning("Per favore, compila entrambi i campi.")
 
 if st.session_state.res:
     r = st.session_state.res
