@@ -2,6 +2,7 @@ import streamlit as st
 from fpdf import FPDF
 import os
 import requests
+import time
 
 # --- Configurazione API (Usa secrets.toml) ---
 HF_API_KEY = st.secrets["HF_API_KEY"]
@@ -23,28 +24,19 @@ def genera_analisi_robusta(pittore, soggetto):
     except:
         return f"Interpretazione magistrale di {soggetto} nello stile di {pittore}."
 
+# 1. Definizione della funzione (deve essere definita PRIMA di essere usata)
 def genera_immagine_gratis(pittore, soggetto):
-    """Genera immagine usando il modello gratuito FLUX.1-schnell."""
     api_url = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
-    headers = {"Authorization": f"Bearer {HF_API_KEY}"}
+    headers = {"Authorization": f"Bearer {st.secrets['HF_API_KEY']}"}
+    prompt = f"Oil painting of {soggetto} in the style of {pittore}."
     
-    # Prompt ottimizzato per il modello veloce
-    prompt = f"Oil painting of {soggetto} in the style of {pittore}, artistic, museum quality."
-    
-    # Tentiamo la generazione
-    for _ in range(5): # Facciamo 5 tentativi
+    for i in range(3):
         response = requests.post(api_url, headers=headers, json={"inputs": prompt})
-        
         if response.status_code == 200:
-            return response.content # L'immagine è pronta
-        elif response.status_code == 503:
-            # Il modello si sta caricando, aspettiamo il tempo indicato (in secondi)
-            time.sleep(15) 
-            continue
-        else:
-            time.sleep(2)
-            
+            return response.content
+        time.sleep(5) # Attesa tra i tentativi
     return None
+
 
 # --- UI e Logica ---
 st.set_page_config(page_title="Il Pennello del Tempo", layout="wide")
@@ -56,16 +48,15 @@ col1, col2 = st.columns(2)
 p_in = col1.text_input("Artista")
 s_in = col2.text_input("Soggetto")
 
+# 2. Pulsante nel corpo principale
 if st.button("Genera Visione Artistica"):
     with st.spinner("Creazione in corso..."):
-        testo = genera_analisi_robusta(p_in, s_in)
+        # Ora la funzione è definita e il modulo 'time' è importato
         img = genera_immagine_gratis(p_in, s_in)
-        
         if img:
-            st.session_state.res = {"t": testo, "i": img, "p": p_in, "s": s_in}
+            st.image(img)
         else:
-            # Invece di crashare, mostriamo un avviso elegante
-            st.error("I server sono temporaneamente sovraccarichi. Riprova subito, ora il sistema è più paziente!")
+            st.error("Errore: Server occupato. Riprova.")
 
 if st.session_state.res:
     r = st.session_state.res
