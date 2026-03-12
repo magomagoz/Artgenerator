@@ -1,157 +1,105 @@
 import streamlit as st
 from fpdf import FPDF
-import io 
 import os
 import requests
 import time
 
-# --- Configurazione API ---
 HF_API_KEY = st.secrets["HF_API_KEY"]
 
 def genera_analisi_robusta(pittore, soggetto):
-    """Prova Hugging Face, se fallisce passa a Gemini con prompt discorsivi."""
+    """Genera una recensione d'arte profonda e strutturata."""
+    prompt_discorsivo = (
+        f"Scrivi una recensione d'arte critica, colta e molto lunga (circa 600 parole) su come {pittore} "
+        f"rappresenterebbe il soggetto '{soggetto}'. La recensione deve essere strutturata con: "
+        f"1. Analisi Tecnica (uso della luce, pennellate, tavolozza colori). "
+        f"2. Composizione (gestione dello spazio, equilibrio visivo, ritmo). "
+        f"3. Interpretazione Concettuale (la filosofia estetica dietro l'opera). "
+        f"Usa un tono ricercato e descrittivo, tipico di un esperto di storia dell'arte."
+    )
     
-    prompt_discorsivo = f"Sei un critico d'arte colto e raffinato. Scrivi un'analisi discorsiva in italiano immaginando come {pittore} interpreterebbe il soggetto '{soggetto}'. Soffermati in modo dettagliato sulla gestione della luce, sull'uso dei colori e sulla tecnica tipica delle sue pennellate, descrivendo l'atmosfera immersiva dell'opera."
-    
-    # 1. TENTATIVO HUGGING FACE
+    # Tentativo Hugging Face
     try:
         api_url = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
-        headers = {"Authorization": f"Bearer {st.secrets['HF_API_KEY']}"}
-        prompt_hf = f"<s>[INST] {prompt_discorsivo} [/INST]"
-        
-        # CORREZIONE: Ho reinserito i parametri per la lunghezza del testo!
+        headers = {"Authorization": f"Bearer {HF_API_KEY}"}
         payload = {
-            "inputs": prompt_hf,
-            "parameters": {
-                "max_new_tokens": 400,
-                "return_full_text": False,
-                "temperature": 0.7
-            }
+            "inputs": f"<s>[INST] {prompt_discorsivo} [/INST]",
+            "parameters": {"max_new_tokens": 1000, "temperature": 0.7}
         }
-        
-        response = requests.post(api_url, headers=headers, json=payload, timeout=15)
+        response = requests.post(api_url, headers=headers, json=payload, timeout=30)
         if response.status_code == 200:
-            testo = response.json()[0]['generated_text']
-            # Pulizia sicura del testo
-            if "[/INST]" in testo:
-                testo = testo.split("[/INST]")[-1]
-            return testo.strip()
+            return response.json()[0]['generated_text'].split("[/INST]")[-1].strip()
     except:
-        pass # Se HF fallisce, passa a Gemini
-
-    # 2. TENTATIVO GEMINI (Fallback per errore 429)
+        pass
+    
+    # Fallback Gemini
     try:
         import google.generativeai as genai
         genai.configure(api_key=st.secrets["API_KEY"])
-        model = genai.GenerativeModel('gemini-1.5-flash') 
-        response = model.generate_content(prompt_discorsivo)
-        if response.text:
-            return response.text
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        return model.generate_content(prompt_discorsivo).text
     except:
-        pass # Se Gemini fallisce, passa al testo di emergenza
-
-    # 3. TESTO DI EMERGENZA (Se entrambe le AI sono bloccate)
-    return f"L'opera rappresenta {soggetto} attraverso il filtro estetico inconfondibile di {pittore}. La gestione magistrale della luce e l'uso vibrante dei colori catturano perfettamente l'essenza della sua tecnica, creando un'atmosfera profondamente immersiva."
+        return f"Interpretazione di {soggetto} nello stile di {pittore}: un'opera che fonde luce e colore in una visione magistrale."
 
 def genera_immagine_huggingface(pittore, soggetto):
-    """Genera l'immagine con un prompt focalizzato su luce e stile."""
+    """Richiede un formato orizzontale specifico."""
     api_url = "https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0"
     headers = {"Authorization": f"Bearer {HF_API_KEY}"}
-    
-    # Prompt in inglese ottimizzato per Stable Diffusion XL (luce e tecnica)
+    # Prompt ottimizzato per formato landscape
     prompt_img = (
-        f"A masterpiece painting of {soggetto} in the exact, unmistakable artistic style of {pittore}. "
-        f"Focus heavily on the signature dramatic lighting, authentic atmospheric color palette, "
-        f"and specific brushwork typical of {pittore}'s iconic artworks. "
-        f"Highly detailed, aesthetic, museum quality composition."
+        f"Professional wide-angle oil painting of {soggetto} in the style of {pittore}, "
+        f"high-end artistic quality, masterful brushwork, lighting and texture. "
+        f"Landscape composition, wide aspect ratio 1.42:1."
     )
     
     for _ in range(3):
         try:
-            response = requests.post(api_url, headers=headers, json={"inputs": prompt_img}, timeout=30)
-            if response.status_code == 200:
-                return response.content
+            response = requests.post(api_url, headers=headers, json={"inputs": prompt_img}, timeout=40)
+            if response.status_code == 200: return response.content
             time.sleep(5)
-        except:
-            continue
+        except: continue
     return None
 
-# --- PDF ---
-class PDF(FPDF):
-    def header(self):
-        self.set_font('Arial', 'B', 15)
-        self.cell(0, 10, 'IL PENNELLO DEL TEMPO', 0, 1, 'C')
-
+# --- PDF con Layout 40x28 ---
 def crea_pdf(pittore, soggetto, analisi, img_bytes):
-    pdf = PDF()
-    
-    # --- PAGINA 1: ANALISI (Verticale) ---
+    # Formato personalizzato 400x280 mm
+    pdf = FPDF(unit='mm', format=(400, 280))
     pdf.add_page()
-    pdf.set_font("Arial", 'B', 16)
-    pdf.cell(0, 10, f"Soggetto: {soggetto} - Stile: {pittore}", 0, 1, 'L')
-    pdf.ln(5)
-    pdf.set_font("Arial", size=12)
-    testo_pulito = analisi.encode('latin-1', 'replace').decode('latin-1')
-    pdf.multi_cell(0, 10, txt=testo_pulito)
-
-    # --- PAGINA 2: IMMAGINE (Orizzontale con controllo altezza) ---
-    if img_bytes:
-        pdf.add_page(orientation='L')
-        
-        with open("temp_print.jpg", "wb") as f:
-            f.write(img_bytes)
-        
-        # Limitiamo l'altezza massima per evitare tagli a fondo pagina
-        altezza_max = 180 
-        
-        try:
-            # Usando 'h=altezza_max' e omettendo 'w', l'immagine si rimpicciolisce 
-            # proporzionalmente finché non sta tutta nella pagina.
-            pdf.image("temp_print.jpg", x=10, y=15, h=altezza_max) 
-            
-        except Exception as e:
-            st.error(f"Errore PDF: {e}")
-        finally:
-            if os.path.exists("temp_print.jpg"):
-                os.remove("temp_print.jpg")
     
+    # Testo
+    pdf.set_font("Arial", 'B', 20)
+    pdf.cell(0, 15, f"{soggetto} - Stile: {pittore}", 0, 1, 'C')
+    pdf.ln(10)
+    pdf.set_font("Arial", size=14)
+    testo = analisi.encode('latin-1', 'replace').decode('latin-1')
+    pdf.multi_cell(0, 10, txt=testo)
+    
+    # Immagine
+    if img_bytes:
+        pdf.add_page()
+        with open("temp.jpg", "wb") as f: f.write(img_bytes)
+        pdf.image("temp.jpg", x=20, y=20, w=360) # 400 - 40 di margine
+        os.remove("temp.jpg")
+        
     return pdf.output(dest='S').encode('latin-1')
 
 # --- UI ---
 st.set_page_config(page_title="Il Pennello del Tempo", layout="wide")
-
-# Controllo se il banner esiste prima di caricarlo per evitare errori
-if os.path.exists("banner.png"):
-    st.image("banner.png")
-
-st.title("🎨 Il Pennello del Tempo")
+st.title("🎨 Il Pennello del Tempo - Edizione Professionale")
 
 if 'res' not in st.session_state: st.session_state.res = None
 
-c1, c2 = st.columns(2)
-p_in = c1.text_input("Artista")
-s_in = c2.text_input("Soggetto")
+col1, col2 = st.columns(2)
+p_in = col1.text_input("Artista")
+s_in = col2.text_input("Soggetto")
 
 if st.button("Genera Visione Artistica"):
-    if p_in and s_in:
-        with st.spinner("Creazione in corso..."):
-            analisi_testo = genera_analisi_robusta(p_in, s_in)
-            immagine_dati = genera_immagine_huggingface(p_in, s_in)
-            
-            if immagine_dati:
-                st.session_state.res = {
-                    "t": analisi_testo, 
-                    "i": immagine_dati, 
-                    "p": p_in, 
-                    "s": s_in
-                }
-            else:
-                st.error("Errore generazione immagine. Riprova.")
+    with st.spinner("Analisi critica e pittura in corso..."):
+        txt = genera_analisi_robusta(p_in, s_in)
+        img = genera_immagine_huggingface(p_in, s_in)
+        st.session_state.res = {"t": txt, "i": img, "p": p_in, "s": s_in}
 
 if st.session_state.res:
-    r = st.session_state.res
-    st.info(r["t"])
-    st.image(r["i"], use_container_width=True)
-    
-    pdf_file = crea_pdf(r["p"], r["s"], r["t"], r["i"])
-    st.download_button("💾 Scarica PDF", data=pdf_file, file_name=f"{r['p']}.pdf")
+    st.info(st.session_state.res["t"])
+    st.image(st.session_state.res["i"], use_container_width=True)
+    pdf = crea_pdf(st.session_state.res["p"], st.session_state.res["s"], st.session_state.res["t"], st.session_state.res["i"])
+    st.download_button("💾 Scarica Dossier (Formato 40x28cm)", data=pdf, file_name="opera.pdf")
