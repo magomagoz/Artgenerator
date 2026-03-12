@@ -140,8 +140,13 @@ if st.button("Genera Visione Artistica"):
 
 if st.session_state.res:
     r = st.session_state.res
-    st.info(r["t"])
-    st.image(r["i"], use_container_width=True)
+    if r["t"]:
+        st.info(r["t"])
     
-    pdf_file = crea_pdf(r["p"], r["s"], r["t"], r["i"])
-    st.download_button("💾 Scarica PDF", data=pdf_file, file_name=f"{r['p']}.pdf")
+    # Controllo di sicurezza prima di mostrare l'immagine
+    if r["i"] is not None:
+        st.image(r["i"], use_container_width=True)
+        pdf_file = crea_pdf(r["p"], r["s"], r["t"], r["i"])
+        st.download_button("💾 Scarica PDF", data=pdf_file, file_name=f"{r['p']}.pdf")
+    else:
+        st.error("L'immagine non è stata generata correttamente. Il server è molto carico.")
