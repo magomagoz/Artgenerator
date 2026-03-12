@@ -15,8 +15,7 @@ if st.button("Genera Interpretazione Artistica e Immagine"):
         st.subheader("### Analisi Testuale")
         text_model = genai.GenerativeModel('gemini-2.5-flash')
 
-        text_prompt = f"""
-        Sei un critico d'arte ed esperto di tecniche pittoriche storiche. 
+        prompt = f"<s>[INST] Sei un critico d'arte ed esperto di tecniche pittoriche storiche. 
         Analizza il soggetto '{soggetto}' come se fosse stato dipinto da {pittore}.
         
         Struttura la risposta in tre punti:
@@ -24,9 +23,8 @@ if st.button("Genera Interpretazione Artistica e Immagine"):
         2. **Composizione**: Spiega come verrebbe impostata la scena.
         3. **Interpretazione concettuale**: Spiega perché questa scelta stilistica valorizza il soggetto.
         
-        Mantieni un tono accademico ma ispirato.
-        """
-        
+        Mantieni un tono accademico ma ispirato. [/INST]"
+                
         with st.spinner('Analizzando lo stile del maestro...'):
             try:
                 text_response = text_model.generate_content(text_prompt)
@@ -36,11 +34,6 @@ if st.button("Genera Interpretazione Artistica e Immagine"):
                 st.error(f"Errore durante la generazione dell'analisi testuale: {e}")
                 analisi_testuale = "Errore durante la generazione dell'analisi." # Per evitare errori nel PDF
 
-        st.divider() # Separatore visivo
-
-
-
-
 def genera_analisi_robusta(pittore, soggetto):
     """Prova Hugging Face, se fallisce passa a Gemini."""
     # 1. TENTATIVO HUGGING FACE
@@ -48,8 +41,7 @@ def genera_analisi_robusta(pittore, soggetto):
         api_url = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
         headers = {"Authorization": f"Bearer {HF_API_KEY}"}
         
-        prompt = f"""
-        Sei un critico d'arte ed esperto di tecniche pittoriche storiche. 
+        prompt = f"Sei un critico d'arte ed esperto di tecniche pittoriche storiche. 
         Analizza il soggetto '{soggetto}' come se fosse stato dipinto da {pittore}.
         
         Struttura la risposta in tre punti:
@@ -57,8 +49,7 @@ def genera_analisi_robusta(pittore, soggetto):
         2. **Composizione**: Spiega come verrebbe impostata la scena.
         3. **Interpretazione concettuale**: Spiega perché questa scelta stilistica valorizza il soggetto.
         
-        Mantieni un tono accademico ma ispirato.
-        """
+        Mantieni un tono accademico ma ispirato."
         
         response = requests.post(api_url, headers=headers, json={"inputs": prompt}, timeout=10)
         if response.status_code == 200:
