@@ -134,7 +134,6 @@ if st.button("Genera Visione Artistica"):
                 st.error("Errore generazione immagine. Riprova.")
 
         with st.spinner('Il maestro sta dipingendo...'):
-            immagine = genera_immagine_vertex(final_image_prompt)
             # Visualizzazione
             st.image(immagine.image_bytes, caption=f"Reinterpretazione di {pittore}")
             
