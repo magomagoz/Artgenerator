@@ -51,10 +51,6 @@ if 'immagine' in st.session_state:
     else:
         st.error("L'immagine non è stata generata. Riprova.")
 
-if st.session_state.res:
-    r = st.session_state.res
-    st.info(r["t"])
-    st.image(r["i"], use_container_width=True)
     
     # Download PDF
     pdf = FPDF(unit='mm', format=(400, 280))
