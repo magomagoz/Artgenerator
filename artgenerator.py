@@ -23,19 +23,27 @@ def genera_analisi_robusta(pittore, soggetto):
     except:
         return f"Interpretazione magistrale di {soggetto} nello stile di {pittore}."
 
-def genera_immagine_stabile(pittore, soggetto):
-    """API Ufficiale Stability AI - Alta Affidabilità."""
-    url = "https://api.stability.ai/v2beta/stable-image/generate/sd3"
-    headers = {"authorization": f"Bearer {STABILITY_API_KEY}", "accept": "image/*"}
-    files = {
-        "prompt": (None, f"A masterpiece oil painting of {soggetto} in the style of {pittore}, artistic and detailed."),
-        "output_format": (None, "jpeg"),
-        "aspect_ratio": (None, "16:9")
-    }
+def genera_immagine_gratis(pittore, soggetto):
+    """Genera immagine usando il modello gratuito FLUX.1-schnell."""
+    api_url = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
+    headers = {"Authorization": f"Bearer {HF_API_KEY}"}
     
-    response = requests.post(url, headers=headers, files=files)
-    if response.status_code == 200:
-        return response.content
+    # Prompt ottimizzato per il modello veloce
+    prompt = f"Oil painting of {soggetto} in the style of {pittore}, artistic, museum quality."
+    
+    # Tentiamo la generazione
+    for _ in range(5): # Facciamo 5 tentativi
+        response = requests.post(api_url, headers=headers, json={"inputs": prompt})
+        
+        if response.status_code == 200:
+            return response.content # L'immagine è pronta
+        elif response.status_code == 503:
+            # Il modello si sta caricando, aspettiamo il tempo indicato (in secondi)
+            time.sleep(15) 
+            continue
+        else:
+            time.sleep(2)
+            
     return None
 
 # --- UI e Logica ---
@@ -49,14 +57,15 @@ p_in = col1.text_input("Artista")
 s_in = col2.text_input("Soggetto")
 
 if st.button("Genera Visione Artistica"):
-    with st.spinner("Analisi e pittura in corso..."):
+    with st.spinner("Creazione in corso..."):
         testo = genera_analisi_robusta(p_in, s_in)
-        img = genera_immagine_stabile(p_in, s_in)
+        img = genera_immagine_gratis(p_in, s_in)
         
         if img:
             st.session_state.res = {"t": testo, "i": img, "p": p_in, "s": s_in}
         else:
-            st.error("Errore nella generazione dell'immagine. Riprova.")
+            # Invece di crashare, mostriamo un avviso elegante
+            st.error("I server sono temporaneamente sovraccarichi. Riprova subito, ora il sistema è più paziente!")
 
 if st.session_state.res:
     r = st.session_state.res
