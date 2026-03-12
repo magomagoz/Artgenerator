@@ -40,9 +40,16 @@ def genera_immagine_huggingface(pittore, soggetto):
     
     for _ in range(3):
         try:
+            # Sostituisci la parte della response in genera_immagine_huggingface con:
             response = requests.post(api_url, headers=headers, json={"inputs": prompt}, timeout=30)
             if response.status_code == 200:
-                return response.content
+                # Controlla se inizia con i byte tipici di un'immagine (es. JPEG o PNG)
+                if response.content.startswith(b'\xff\xd8') or response.content.startswith(b'\x89PNG'):
+                    return response.content
+                else:
+                    # Se non è un'immagine, probabilmente è un messaggio di errore (es: "Model is loading")
+                    return None 
+
             time.sleep(5)
         except:
             continue
