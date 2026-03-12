@@ -93,10 +93,23 @@ p_in = col1.text_input("Artista")
 s_in = col2.text_input("Soggetto")
 
 if st.button("Genera Visione Artistica"):
-    with st.spinner("Analisi critica e pittura in corso..."):
-        txt = genera_analisi_robusta(p_in, s_in)
-        img = genera_immagine_huggingface(p_in, s_in)
-        st.session_state.res = {"t": txt, "i": img, "p": p_in, "s": s_in}
+    if p_in and s_in:
+        # Inizializziamo il contenitore dei risultati
+        st.session_state.res = {"t": None, "i": None, "p": p_in, "s": s_in}
+        
+        # 1. Generazione Testo (Indipendente)
+        with st.spinner("Il critico sta studiando l'opera..."):
+            st.session_state.res["t"] = genera_analisi_robusta(p_in, s_in)
+            
+        # 2. Generazione Immagine (Indipendente)
+        with st.spinner("Il pittore è al lavoro..."):
+            img = genera_immagine_huggingface(p_in, s_in)
+            if img:
+                st.session_state.res["i"] = img
+            else:
+                st.warning("L'immagine non è stata generata per sovraccarico. Il testo è comunque pronto.")
+    else:
+        st.warning("Inserisci entrambi i campi!")
 
 if st.session_state.res:
     st.info(st.session_state.res["t"])
