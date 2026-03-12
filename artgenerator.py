@@ -11,20 +11,33 @@ HF_API_KEY = st.secrets["HF_API_KEY"]
 def genera_analisi_robusta(pittore, soggetto):
     """Prova Hugging Face, se fallisce passa a Gemini con prompt discorsivi."""
     
-    # Prompt discorsivo condiviso tra i modelli
     prompt_discorsivo = f"Sei un critico d'arte colto e raffinato. Scrivi un'analisi discorsiva in italiano immaginando come {pittore} interpreterebbe il soggetto '{soggetto}'. Soffermati in modo dettagliato sulla gestione della luce, sull'uso dei colori e sulla tecnica tipica delle sue pennellate, descrivendo l'atmosfera immersiva dell'opera."
     
     # 1. TENTATIVO HUGGING FACE
     try:
         api_url = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
-        headers = {"Authorization": f"Bearer {HF_API_KEY}"}
-        # Aggiungiamo i tag di istruzione necessari per Mistral
+        headers = {"Authorization": f"Bearer {st.secrets['HF_API_KEY']}"}
         prompt_hf = f"<s>[INST] {prompt_discorsivo} [/INST]"
-        response = requests.post(api_url, headers=headers, json={"inputs": prompt_hf}, timeout=10)
+        
+        # CORREZIONE: Ho reinserito i parametri per la lunghezza del testo!
+        payload = {
+            "inputs": prompt_hf,
+            "parameters": {
+                "max_new_tokens": 400,
+                "return_full_text": False,
+                "temperature": 0.7
+            }
+        }
+        
+        response = requests.post(api_url, headers=headers, json=payload, timeout=15)
         if response.status_code == 200:
-            return response.json()[0]['generated_text'].split("[/INST]")[-1].strip()
+            testo = response.json()[0]['generated_text']
+            # Pulizia sicura del testo
+            if "[/INST]" in testo:
+                testo = testo.split("[/INST]")[-1]
+            return testo.strip()
     except:
-        pass
+        pass # Se HF fallisce, passa a Gemini
 
     # 2. TENTATIVO GEMINI (Fallback per errore 429)
     try:
@@ -32,9 +45,13 @@ def genera_analisi_robusta(pittore, soggetto):
         genai.configure(api_key=st.secrets["API_KEY"])
         model = genai.GenerativeModel('gemini-1.5-flash') 
         response = model.generate_content(prompt_discorsivo)
-        return response.text
+        if response.text:
+            return response.text
     except:
-        return f"Un'interessante interpretazione di {soggetto} attraverso gli occhi di {pittore}, dove la luce e la forma si fondono nel suo stile inconfondibile."
+        pass # Se Gemini fallisce, passa al testo di emergenza
+
+    # 3. TESTO DI EMERGENZA (Se entrambe le AI sono bloccate)
+    return f"L'opera rappresenta {soggetto} attraverso il filtro estetico inconfondibile di {pittore}. La gestione magistrale della luce e l'uso vibrante dei colori catturano perfettamente l'essenza della sua tecnica, creando un'atmosfera profondamente immersiva."
 
 def genera_immagine_huggingface(pittore, soggetto):
     """Genera l'immagine con un prompt focalizzato su luce e stile."""
