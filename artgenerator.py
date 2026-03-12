@@ -180,19 +180,19 @@ if st.button("Genera Interpretazione Artistica e Immagine"):
                 # generated_image_bytes = cattura_immagine_generata_dal_tuo_ambiente()
                 # pdf_data = crea_pdf_con_immagine(analisi_testuale, generated_image_bytes)
 
-        with st.spinner('Il maestro sta dipingendo...'):
-            immagine = genera_immagine_vertex(final_image_prompt)
-            # Visualizzazione
-            st.image(immagine.image_bytes, caption=f"Reinterpretazione di {pittore}")
+    with st.spinner('Il maestro sta dipingendo...'):
+        immagine = genera_immagine_vertex(final_image_prompt)
+        # Visualizzazione
+        st.image(immagine.image_bytes, caption=f"Reinterpretazione di {pittore}")
             
-            # Download PDF con immagine inclusa
-            pdf_data = crea_pdf_con_immagine(analisi_testuale, immagine.image_bytes)
-            st.download_button("💾 Salva PDF Completo", data=crea_pdf_con_immagine(analisi_testuale), # Ora senza immagine per il momento
-                    file_name="interpretazione.pdf",
-                    mime="application/pdf"
-                )
+        # Download PDF con immagine inclusa
+        pdf_data = crea_pdf_con_immagine(analisi_testuale, immagine.image_bytes)
+        st.download_button("💾 Salva PDF Completo", data=crea_pdf_con_immagine(analisi_testuale), # Ora senza immagine per il momento
+                file_name="interpretazione.pdf",
+                mime="application/pdf"
+        )
 
-        except Exception as e:
-            st.error(f"Errore durante la generazione dell'immagine: {e}")
-    else:
-        st.warning("Per favore, compila entrambi i campi.")
+    except Exception as e:
+        st.error(f"Errore durante la generazione dell'immagine: {e}")
+else:
+    st.warning("Per favore, compila entrambi i campi.")
