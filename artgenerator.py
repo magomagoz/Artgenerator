@@ -8,32 +8,6 @@ import time
 # --- Configurazione API ---
 HF_API_KEY = st.secrets["HF_API_KEY"]
 
-# --- Bottone Genera ---
-if st.button("Genera Interpretazione Artistica e Immagine"):
-    if pittore and soggetto:
-        # --- Generazione Testuale ---
-        st.subheader("### Analisi Testuale")
-        text_model = genai.GenerativeModel('gemini-2.5-flash')
-
-        prompt = f"<s>[INST] Sei un critico d'arte ed esperto di tecniche pittoriche storiche. 
-        Analizza il soggetto '{soggetto}' come se fosse stato dipinto da {pittore}.
-        
-        Struttura la risposta in tre punti:
-        1. **Analisi Tecnica**: Descrivi la pennellata, l'uso del colore e la luce tipica dell'autore.
-        2. **Composizione**: Spiega come verrebbe impostata la scena.
-        3. **Interpretazione concettuale**: Spiega perché questa scelta stilistica valorizza il soggetto.
-        
-        Mantieni un tono accademico ma ispirato. [/INST]"
-                
-        with st.spinner('Analizzando lo stile del maestro...'):
-            try:
-                text_response = text_model.generate_content(text_prompt)
-                analisi_testuale = text_response.text
-                st.markdown(analisi_testuale)
-            except Exception as e:
-                st.error(f"Errore durante la generazione dell'analisi testuale: {e}")
-                analisi_testuale = "Errore durante la generazione dell'analisi." # Per evitare errori nel PDF
-
 def genera_analisi_robusta(pittore, soggetto):
     """Prova Hugging Face, se fallisce passa a Gemini."""
     # 1. TENTATIVO HUGGING FACE
@@ -41,15 +15,7 @@ def genera_analisi_robusta(pittore, soggetto):
         api_url = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
         headers = {"Authorization": f"Bearer {HF_API_KEY}"}
         
-        prompt = f"Sei un critico d'arte ed esperto di tecniche pittoriche storiche. 
-        Analizza il soggetto '{soggetto}' come se fosse stato dipinto da {pittore}.
-        
-        Struttura la risposta in tre punti:
-        1. **Analisi Tecnica**: Descrivi la pennellata, l'uso del colore e la luce tipica dell'autore.
-        2. **Composizione**: Spiega come verrebbe impostata la scena.
-        3. **Interpretazione concettuale**: Spiega perché questa scelta stilistica valorizza il soggetto.
-        
-        Mantieni un tono accademico ma ispirato."
+        prompt = f"Sei un grande critico d'arte e devi descrivere il soggetto '{soggetto}' nell'interpretazione del grande pittore {pittore}."
         
         response = requests.post(api_url, headers=headers, json={"inputs": prompt}, timeout=10)
         if response.status_code == 200:
@@ -72,18 +38,7 @@ def genera_immagine_huggingface(pittore, soggetto):
     # Usiamo l'URL corretto richiesto da HF
     api_url = "https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0"
     headers = {"Authorization": f"Bearer {HF_API_KEY}"}
-    prompt = f"""
-        Basandoti sullo stile di {pittore} e sul soggetto '{soggetto}', 
-        crea una descrizione dettagliata per un generatore di immagini AI. 
-        La descrizione deve includere dettagli su:
-        - tipo di immagine (dipinto ad olio, acquerello, scultura, ecc.)
-        - colori dominanti e tavolozza
-        - composizione e inquadratura
-        - illuminazione e atmosfera
-        - elementi specifici del pittore (es. pennellate, figure distorte, chiaroscuro)
-        - dettagli sul soggetto '{soggetto}' nel contesto di quello stile.
-        La descrizione deve essere in inglese e avere una lunghezza massima di 150 parole.
-        """
+    prompt = f"Sei il grande pittore {pittore} e dipingi con il tuo stile il soggetto '{soggetto}'."
     
     for _ in range(3):
         try:
