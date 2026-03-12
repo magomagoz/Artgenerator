@@ -145,8 +145,8 @@ if st.button("Genera Visione Artistica"):
                     mime="application/pdf"
                 )
 
-            except Exception as e:
-                st.error(f"Errore durante la generazione dell'immagine: {e}")
+        except Exception as e:
+            st.error(f"Errore durante la generazione dell'immagine: {e}")
     else:
         st.warning("Per favore, compila entrambi i campi.")
 
