@@ -5,16 +5,16 @@ from fpdf import FPDF  # <--- ERRORE RISOLTO: Mancava questa riga!
 import urllib.parse # Aggiungi questo import in alto!
 import io
 
+# 1. Modifica la funzione Gemini (Il modello 2.5 non esiste!)
 def genera_analisi_testuale(pittore, soggetto):
-    prompt = f"Scrivi un'analisi critica colta su come {pittore} dipingerebbe '{soggetto}'."
     try:
         import google.generativeai as genai
         genai.configure(api_key=st.secrets["API_KEY"]) 
-        model = genai.GenerativeModel('gemini-2.5-flash') # MODELLO CORRETTO
-        response = model.generate_content(prompt)
+        model = genai.GenerativeModel('gemini-1.5-flash') # MODELLO REALE
+        response = model.generate_content(f"Analisi critica su {soggetto} stile {pittore}")
         return response.text
     except Exception as e:
-        return f"Errore Gemini: {e}"
+        return f"Errore: {e}"
 
 def genera_immagine_flux(pittore, soggetto):
     # Prompt più semplice per evitare errori
@@ -67,36 +67,27 @@ if 'immagine' in st.session_state:
     else:
         st.error("L'immagine non è stata generata per sovraccarico del server. Riprova.")
 
-# --- GENERAZIONE PDF (Appare SOLO se entrambi sono pronti) ---
-# ERRORE RISOLTO: Il codice ora usa le variabili corrette al posto di r["t"]
-    st.divider() # Linea di separazione
-
-if st.session_state.get('immagine'):
-    img_stream = io.BytesIO(st.session_state.immagine)
-    pdf.image(img_stream, x=20, y=20, w=360)
-    
-    try:
-        pdf = FPDF(unit='mm', format=(400, 280))
-        pdf.add_page()
-        pdf.set_font("Arial", size=14)
-        
-        # Inserimento Testo
-        testo_pulito = st.session_state.analisi.encode('latin-1', 'replace').decode('latin-1')
-        pdf.multi_cell(0, 10, txt=testo_pulito)
-        
-        # Inserimento Immagine
-        with open("tmp.jpg", "wb") as f: 
-            f.write(st.session_state.immagine)
-        
-        pdf.add_page()
-        pdf.image("tmp.jpg", x=20, y=20, w=360)
-        
-        # Tasto Download
-        nome_file = st.session_state.get('pittore_pdf', 'Opera')
-        st.download_button(
-            label="💾 Scarica Dossier PDF Completo", 
-            data=pdf.output(dest='S').encode('latin-1'), 
-            file_name=f"{nome_file}.pdf"
-        )
-    except Exception as e:
-        st.error(f"Impossibile generare il PDF: {e}")
+# 2. Struttura del PDF sicura (Da inserire DOVE avevi il blocco PDF)
+if 'analisi' in st.session_state and 'immagine' in st.session_state:
+    if st.session_state.immagine:
+        st.divider()
+        if st.button("Genera il Dossier PDF"):
+            try:
+                pdf = FPDF(unit='mm', format=(400, 280))
+                pdf.add_page()
+                pdf.set_font("Arial", size=14)
+                
+                # Testo
+                testo = st.session_state.analisi.encode('latin-1', 'replace').decode('latin-1')
+                pdf.multi_cell(0, 10, txt=testo)
+                
+                # Immagine direttamente da memoria
+                pdf.add_page()
+                img_stream = io.BytesIO(st.session_state.immagine)
+                pdf.image(img_stream, x=20, y=20, w=360)
+                
+                st.download_button("💾 Scarica Dossier PDF", 
+                                   data=pdf.output(dest='S').encode('latin-1'), 
+                                   file_name="opera.pdf")
+            except Exception as e:
+                st.error(f"Errore PDF: {e}")
