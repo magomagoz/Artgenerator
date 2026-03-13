@@ -10,7 +10,7 @@ def genera_analisi_testuale(pittore, soggetto):
     try:
         import google.generativeai as genai
         genai.configure(api_key=st.secrets["API_KEY"]) 
-        model = genai.GenerativeModel('gemini-1.5-flash') # MODELLO CORRETTO
+        model = genai.GenerativeModel('gemini-2.5-flash') # MODELLO CORRETTO
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
