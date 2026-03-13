@@ -3,35 +3,40 @@ import requests
 import time
 from fpdf import FPDF  # <--- ERRORE RISOLTO: Mancava questa riga!
 
-# --- LOGICA TESTUALE (Indipendente) ---
+# --- LOGICA TESTUALE (Via Google Gemini - Gratis e Veloce) ---
 def genera_analisi_testuale(pittore, soggetto):
-    api_url = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
-    headers = {"Authorization": f"Bearer {st.secrets['HF_API_KEY']}"}
-    prompt = f"<s>[INST] Scrivi una breve e colta analisi critica su '{soggetto}' nello stile pittorico di {pittore}. [/INST]"
+    prompt = f"Scrivi un'analisi critica colta e dettagliata su come il pittore {pittore} interpreterebbe il soggetto '{soggetto}'. Soffermati su pennellate, colori e luci."
+    try:
+        import google.generativeai as genai
+        # Usa la chiave Gemini che avevi già nel file secrets
+        genai.configure(api_key=st.secrets["API_KEY"]) 
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(prompt)
+        if response.text:
+            return response.text
+    except Exception as e:
+        return f"Errore di connessione a Gemini. Controlla la tua API_KEY in secrets."
+    
+    return f"Un'affascinante visione di {soggetto} interpretata con la maestria tipica di {pittore}."
+
+# --- LOGICA IMMAGINE (Via Pollinations.ai - Gratis e Senza Chiavi) ---
+def genera_immagine_flux(pittore, soggetto):
+    # Pollinations non richiede chiavi API ed è molto più stabile!
+    prompt_base = f"A masterpiece oil painting of {soggetto} in the style of {pittore}, highly detailed, museum quality"
+    # Formattiamo il prompt per l'URL (sostituisce gli spazi con %20)
+    prompt_url = prompt_base.replace(" ", "%20")
+    api_url = f"https://image.pollinations.ai/prompt/{prompt_url}"
     
     try:
-        response = requests.post(api_url, headers=headers, json={"inputs": prompt, "parameters": {"max_new_tokens": 400}}, timeout=15)
+        # Facciamo una semplice richiesta GET
+        response = requests.get(api_url, timeout=30)
         if response.status_code == 200:
-            return response.json()[0]['generated_text'].split("[/INST]")[-1].strip()
-        return f"Un'affascinante visione di {soggetto} interpretata con la maestria tipica di {pittore}."
-    except:
-        return f"Un'affascinante visione di {soggetto} interpretata con la maestria tipica di {pittore}."
-
-# --- LOGICA IMMAGINE (Indipendente) ---
-def genera_immagine_flux(pittore, soggetto):
-    api_url = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
-    headers = {"Authorization": f"Bearer {st.secrets['HF_API_KEY']}"}
-    prompt = f"Oil painting of {soggetto} in the style of {pittore}."
-    
-    for _ in range(3):
-        try:
-            response = requests.post(api_url, headers=headers, json={"inputs": prompt}, timeout=20)
-            if response.status_code == 200:
-                return response.content
-            time.sleep(5)
-        except:
-            continue
+            return response.content
+    except Exception as e:
+        pass # Se fallisce, restituisce None
+        
     return None
+
 
 # --- UI (Layout a due colonne) ---
 st.set_page_config(page_title="Il Pennello del Tempo", layout="wide")
