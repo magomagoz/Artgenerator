@@ -2,41 +2,33 @@ import streamlit as st
 import requests
 import time
 from fpdf import FPDF  # <--- ERRORE RISOLTO: Mancava questa riga!
+import urllib.parse # Aggiungi questo import in alto!
+import io
 
-# --- LOGICA TESTUALE (Via Google Gemini - Gratis e Veloce) ---
 def genera_analisi_testuale(pittore, soggetto):
-    prompt = f"Scrivi un'analisi critica colta e dettagliata su come il pittore {pittore} interpreterebbe il soggetto '{soggetto}'. Soffermati su pennellate, colori e luci."
+    prompt = f"Scrivi un'analisi critica colta su come {pittore} dipingerebbe '{soggetto}'."
     try:
         import google.generativeai as genai
-        # Usa la chiave Gemini che avevi già nel file secrets
         genai.configure(api_key=st.secrets["API_KEY"]) 
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        model = genai.GenerativeModel('gemini-1.5-flash') # MODELLO CORRETTO
         response = model.generate_content(prompt)
-        if response.text:
-            return response.text
+        return response.text
     except Exception as e:
-        return f"Errore di connessione a Gemini. Controlla la tua API_KEY in secrets."
-    
-    return f"Un'affascinante visione di {soggetto} interpretata con la maestria tipica di {pittore}."
+        return f"Errore Gemini: {e}"
 
 def genera_immagine_flux(pittore, soggetto):
-    """
-    Usa Pollinations.ai: è un'API gratuita, non richiede chiavi, 
-    ed è estremamente stabile per generare immagini in tempo reale.
-    """
-    # Puliamo il prompt per l'URL
-    prompt = f"A masterpiece oil painting of {soggetto} in the style of {pittore}, museum quality, artistic, detailed"
-    prompt_url = prompt.replace(" ", "%20")
-    
-    # URL di Pollinations
-    api_url = f"https://image.pollinations.ai/prompt/{prompt_url}?width=1024&height=768&nologo=true"
+    # Prompt più semplice per evitare errori
+    prompt = f"Oil painting of {soggetto} by {pittore}"
+    # Codifica URL corretta
+    prompt_url = urllib.parse.quote(prompt)
+    api_url = f"https://image.pollinations.ai/prompt/{prompt_url}?width=1024&height=768&nologo=true&seed=42"
     
     try:
-        response = requests.get(api_url, timeout=30)
+        # Aumentiamo il timeout
+        response = requests.get(api_url, timeout=60) 
         if response.status_code == 200:
-            return response.content # Restituisce direttamente i byte dell'immagine
-    except Exception as e:
-        st.error(f"Errore nella chiamata a Pollinations: {e}")
+            return response.content
+    except:
         return None
     return None
 
@@ -77,8 +69,11 @@ if 'immagine' in st.session_state:
 
 # --- GENERAZIONE PDF (Appare SOLO se entrambi sono pronti) ---
 # ERRORE RISOLTO: Il codice ora usa le variabili corrette al posto di r["t"]
-if st.session_state.get('analisi') and st.session_state.get('immagine'):
     st.divider() # Linea di separazione
+
+if st.session_state.get('immagine'):
+    img_stream = io.BytesIO(st.session_state.immagine)
+    pdf.image(img_stream, x=20, y=20, w=360)
     
     try:
         pdf = FPDF(unit='mm', format=(400, 280))
