@@ -6,15 +6,11 @@ import urllib.parse # Aggiungi questo import in alto!
 import io
 
 # 1. Modifica la funzione Gemini (Il modello 2.5 non esiste!)
-def genera_analisi_testuale(pittore, soggetto):
-    try:
-        import google.generativeai as genai
-        genai.configure(api_key=st.secrets["API_KEY"]) 
-        model = genai.GenerativeModel('gemini-1.5-flash') # MODELLO REALE
-        response = model.generate_content(f"Analisi critica su {soggetto} stile {pittore}")
-        return response.text
-    except Exception as e:
-        return f"Errore: {e}"
+def genera_immagine_flux(pittore, soggetto):
+    prompt = f"Oil painting of {soggetto} by {pittore}"
+    prompt_url = urllib.parse.quote(prompt)
+    # Restituiamo direttamente l'URL, non i byte!
+    return f"https://image.pollinations.ai/prompt/{prompt_url}?width=1024&height=768&nologo=true&seed=42"
 
 def genera_immagine_flux(pittore, soggetto):
     # Prompt più semplice per evitare errori
@@ -61,11 +57,11 @@ if col2.button("Genera Visione Visiva"):
 if st.session_state.get('analisi'):
     st.info(st.session_state.analisi)
 
+# E nella UI, modifica come la visualizzi:
 if 'immagine' in st.session_state:
     if st.session_state.immagine:
-        st.image(st.session_state.immagine, use_container_width=True)
-    else:
-        st.error("L'immagine non è stata generata per sovraccarico del server. Riprova.")
+        # Streamlit caricherà l'immagine dal link da solo, molto più velocemente!
+        st.image(st.session_state.immagine, use_container_width=True) 
 
 # 2. Struttura del PDF sicura (Da inserire DOVE avevi il blocco PDF)
 if 'analisi' in st.session_state and 'immagine' in st.session_state:
