@@ -1,56 +1,45 @@
 import streamlit as st
-import google.generativeai as genai
-from fpdf import FPDF
+import urllib.parse
 
-# Configurazione API
-genai.configure(api_key="TUA_API_KEY")
-model = genai.GenerativeModel('gemini-1.5-flash') # Versione più moderna e veloce
+# Configurazione Pagina
+st.set_page_config(page_title="Il Pennello del Tempo", page_icon="🎨", layout="centered")
 
-st.set_page_config(page_title="Interpretazioni d'Arte", page_icon="🎨")
 st.title("🎨 Il Pennello del Tempo")
+st.subheader("Genera una visione artistica originale")
 
-def crea_pdf(testo):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-    # Gestione caratteri italiani
-    testo_encoded = testo.encode('latin-1', 'replace').decode('latin-1')
-    pdf.multi_cell(0, 10, txt=testo_encoded)
-    return pdf.output(dest='S').encode('latin-1')
-
+# Input utente
 col1, col2 = st.columns(2)
-pittore = col1.text_input("Pittore (es. Van Gogh)")
-soggetto = col2.text_input("Soggetto (es. uno smartphone)")
+pittore = col1.text_input("Pittore (es. Monet, Caravaggio, Dalí)")
+soggetto = col2.text_input("Soggetto (es. Pechino, un gatto, il mare)")
 
-if st.button("Genera Interpretazione"):
+# Logica di generazione
+if st.button("Genera Visione Artistica"):
     if pittore and soggetto:
-        prompt = f"""
-        Agisci come un esperto storico dell'arte. Analizza il soggetto '{soggetto}' 
-        reinterpretandolo attraverso la tecnica pittorica di {pittore}.
-        
-        Struttura la risposta in:
-        1. **Analisi Tecnica**: Pennellata, luce, tavolozza.
-        2. **Composizione**: Impostazione spaziale.
-        3. **Interpretazione concettuale**: Senso filosofico dell'opera.
-        """
-        
-        with st.spinner('Il maestro sta dipingendo...'):
-            try:
-                response = model.generate_content(prompt)
-                analisi = response.text
-                
-                # Visualizzazione output
-                st.markdown("### Interpretazione Artistica")
-                st.markdown(analisi)
-                
-                # Tasto download (appare solo se c'è l'analisi)
-                st.download_button(
-                    label="💾 Salva Analisi in PDF",
-                    data=crea_pdf(analisi),
-                    file_name="interpretazione.pdf",
-                    mime="application/pdf"
-                )
-            except Exception as e:
-                st.error(f"Errore durante la generazione: {e}")
+        with st.spinner(f'Il maestro {pittore} sta dipingendo {soggetto}...'):
+            # Creiamo un prompt descrittivo e originale
+            prompt_artistico = f"A masterpiece oil painting of {soggetto} in the unique artistic style of {pittore}. Detailed brushwork, authentic colors, museum quality, 8k resolution."
+            
+            # Codifichiamo il testo per l'URL (trasforma spazi in %20)
+            prompt_encoded = urllib.parse.quote(prompt_artistico)
+            
+            # Costruiamo l'URL di Pollinations (Molto più stabile delle API tradizionali)
+            # Aggiungiamo un parametro 'seed' casuale per avere interpretazioni sempre originali
+            import random
+            seed = random.randint(0, 99999)
+            image_url = f"https://image.pollinations.ai/prompt/{prompt_encoded}?width=1024&height=768&nologo=true&seed={seed}"
+            
+            # Mostriamo l'immagine
+            # Passando direttamente l'URL, evitiamo l'errore di "sovraccarico del server"
+            st.image(image_url, caption=f"{soggetto} interpretato da {pittore}", use_container_width=True)
+            
+            # Messaggio di successo
+            st.success("Interpretazione completata!")
+            
+            # Nota tecnica: Per il download del PDF dell'immagine, 
+            # servirebbe scaricare i byte, il che potrebbe ridare l'errore di timeout.
+            # Per ora, puoi salvare l'immagine cliccando col tasto destro sopra di essa.
+            
     else:
-        st.warning("Per favore, compila entrambi i campi.")
+        st.warning("Inserisci sia il nome del pittore che il soggetto per iniziare.")
+
+st.info("Consiglio: Sii specifico! Invece di 'Van Gogh', prova 'Van Gogh periodo parigino' per risultati più originali.")
