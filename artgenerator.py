@@ -6,11 +6,15 @@ import urllib.parse # Aggiungi questo import in alto!
 import io
 
 # 1. Modifica la funzione Gemini (Il modello 2.5 non esiste!)
-def genera_immagine_flux(pittore, soggetto):
-    prompt = f"Oil painting of {soggetto} by {pittore}"
-    prompt_url = urllib.parse.quote(prompt)
-    # Restituiamo direttamente l'URL, non i byte!
-    return f"https://image.pollinations.ai/prompt/{prompt_url}?width=1024&height=768&nologo=true&seed=42"
+def genera_analisi_testuale(pittore, soggetto):
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=st.secrets["API_KEY"]) 
+        model = genai.GenerativeModel('gemini-pro') # MODELLO REALE
+        response = model.generate_content(f"Analisi critica su {soggetto} stile {pittore}")
+        return response.text
+    except Exception as e:
+        return f"Errore: {e}"
 
 def genera_immagine_flux(pittore, soggetto):
     # Prompt più semplice per evitare errori
