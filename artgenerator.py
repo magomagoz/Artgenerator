@@ -10,7 +10,7 @@ def genera_analisi_testuale(pittore, soggetto):
         import google.generativeai as genai
         # Usa la chiave Gemini che avevi già nel file secrets
         genai.configure(api_key=st.secrets["API_KEY"]) 
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.5-flash')
         response = model.generate_content(prompt)
         if response.text:
             return response.text
