@@ -1,38 +1,56 @@
 import streamlit as st
 import google.generativeai as genai
 from fpdf import FPDF
-from PIL import Image
-import io
 
-# Configurazione (Assicurati di impostare la tua API Key)
+# Configurazione API
 genai.configure(api_key="TUA_API_KEY")
+model = genai.GenerativeModel('gemini-1.5-flash') # Versione più moderna e veloce
+
+st.set_page_config(page_title="Interpretazioni d'Arte", page_icon="🎨")
+st.title("🎨 Il Pennello del Tempo")
 
 def crea_pdf(testo):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
-    pdf.multi_cell(0, 10, txt=testo.encode('latin-1', 'replace').decode('latin-1'))
+    # Gestione caratteri italiani
+    testo_encoded = testo.encode('latin-1', 'replace').decode('latin-1')
+    pdf.multi_cell(0, 10, txt=testo_encoded)
     return pdf.output(dest='S').encode('latin-1')
 
-st.title("🎨 Laboratorio di Stile Multimodale")
+col1, col2 = st.columns(2)
+pittore = col1.text_input("Pittore (es. Van Gogh)")
+soggetto = col2.text_input("Soggetto (es. uno smartphone)")
 
-# 1. Input Multimodale
-pittore = st.text_input("Pittore di riferimento:")
-file_caricato = st.file_uploader("Carica un'immagine del soggetto da reinterpretare", type=['jpg', 'png'])
-
-if st.button("Genera Analisi"):
-    if pittore and file_caricato:
-        img = Image.open(file_caricato)
-        model = genai.GenerativeModel('gemini-1.5-flash') # Versione multimodale
+if st.button("Genera Interpretazione"):
+    if pittore and soggetto:
+        prompt = f"""
+        Agisci come un esperto storico dell'arte. Analizza il soggetto '{soggetto}' 
+        reinterpretandolo attraverso la tecnica pittorica di {pittore}.
         
-        prompt = f"Sei un critico d'arte. Analizza questa immagine nello stile tecnico e compositivo di {pittore}."
+        Struttura la risposta in:
+        1. **Analisi Tecnica**: Pennellata, luce, tavolozza.
+        2. **Composizione**: Impostazione spaziale.
+        3. **Interpretazione concettuale**: Senso filosofico dell'opera.
+        """
         
-        with st.spinner('Analisi artistica in corso...'):
-            response = model.generate_content([prompt, img])
-            st.markdown(response.text)
-            
-            # 2. Tasto Salvataggio PDF
-            pdf_data = crea_pdf(response.text)
-            st.download_button("💾 Salva Analisi in PDF", data=pdf_data, file_name="analisi_arte.pdf", mime="application/pdf")
+        with st.spinner('Il maestro sta dipingendo...'):
+            try:
+                response = model.generate_content(prompt)
+                analisi = response.text
+                
+                # Visualizzazione output
+                st.markdown("### Interpretazione Artistica")
+                st.markdown(analisi)
+                
+                # Tasto download (appare solo se c'è l'analisi)
+                st.download_button(
+                    label="💾 Salva Analisi in PDF",
+                    data=crea_pdf(analisi),
+                    file_name="interpretazione.pdf",
+                    mime="application/pdf"
+                )
+            except Exception as e:
+                st.error(f"Errore durante la generazione: {e}")
     else:
-        st.error("Inserisci il nome del pittore e carica un'immagine!")
+        st.warning("Per favore, compila entrambi i campi.")
