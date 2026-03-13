@@ -19,24 +19,26 @@ def genera_analisi_testuale(pittore, soggetto):
     
     return f"Un'affascinante visione di {soggetto} interpretata con la maestria tipica di {pittore}."
 
-# --- LOGICA IMMAGINE (Via Pollinations.ai - Gratis e Senza Chiavi) ---
 def genera_immagine_flux(pittore, soggetto):
-    # Pollinations non richiede chiavi API ed è molto più stabile!
-    prompt_base = f"A masterpiece oil painting of {soggetto} in the style of {pittore}, highly detailed, museum quality"
-    # Formattiamo il prompt per l'URL (sostituisce gli spazi con %20)
-    prompt_url = prompt_base.replace(" ", "%20")
-    api_url = f"https://image.pollinations.ai/prompt/{prompt_url}"
+    """
+    Usa Pollinations.ai: è un'API gratuita, non richiede chiavi, 
+    ed è estremamente stabile per generare immagini in tempo reale.
+    """
+    # Puliamo il prompt per l'URL
+    prompt = f"A masterpiece oil painting of {soggetto} in the style of {pittore}, museum quality, artistic, detailed"
+    prompt_url = prompt.replace(" ", "%20")
+    
+    # URL di Pollinations
+    api_url = f"https://image.pollinations.ai/prompt/{prompt_url}?width=1024&height=768&nologo=true"
     
     try:
-        # Facciamo una semplice richiesta GET
         response = requests.get(api_url, timeout=30)
         if response.status_code == 200:
-            return response.content
+            return response.content # Restituisce direttamente i byte dell'immagine
     except Exception as e:
-        pass # Se fallisce, restituisce None
-        
+        st.error(f"Errore nella chiamata a Pollinations: {e}")
+        return None
     return None
-
 
 # --- UI (Layout a due colonne) ---
 st.set_page_config(page_title="Il Pennello del Tempo", layout="wide")
