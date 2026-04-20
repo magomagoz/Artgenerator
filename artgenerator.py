@@ -1,6 +1,6 @@
 import streamlit as st
 import urllib.parse
-import requests  # Assicurati di avere questo import!
+import requests
 import random
 
 # Configurazione base
@@ -32,6 +32,13 @@ if st.button("Genera Visione Artistica"):
                     # 4. Visualizziamo i dati BINARI dell'immagine (metodo più sicuro)
                     st.image(response.content, caption=f"{soggetto} in stile {pittore}", use_container_width=True)
                     st.success("Opera completata!")
+
+                st.download_button(
+                label="💾 Scarica questa opera",
+                data=response.content,
+                file_name=f"{soggetto}_{pittore}.jpg",
+                mime="image/jpeg"
+            )
                 else:
                     st.error("Il servizio di pittura è momentaneamente occupato. Riprova tra pochi secondi.")
             except Exception as e:
