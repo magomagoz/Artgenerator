@@ -5,7 +5,8 @@ import random
 
 # Configurazione base
 st.set_page_config(page_title="Il Pennello del Tempo", page_icon="🎨")
-st.title("🎨 Il Pennello del Tempo")
+st.image("banner.png")
+#st.title("🎨 Il Pennello del Tempo")
 
 # Input utente
 col1, col2 = st.columns(2)
