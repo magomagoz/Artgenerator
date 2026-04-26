@@ -4,7 +4,7 @@ import requests
 import random
 
 # Configurazione base
-st.set_page_config(page_title="Il Pennello del Tempo", page_icon="🎨")
+st.set_page_config(page_title="Il Pennello del Tempo", page_icon="🎨", layout=wide)
 st.image("banner3.png")
 #st.title("🎨 Il Pennello del Tempo")
 
