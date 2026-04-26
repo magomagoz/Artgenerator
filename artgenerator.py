@@ -24,24 +24,25 @@ if st.button("Genera Visione Artistica"):
             image_url = f"https://image.pollinations.ai/prompt/{prompt_encoded}?width=1024&height=768&nologo=true&seed={seed}"
             
             try:
-                # 3. FORZIAMO lo scaricamento dell'immagine dal server
-                # Questo evita il quadratino col punto interrogativo
+                # 3. Scarichiamo l'immagine dal server per stabilità
                 response = requests.get(image_url, timeout=30)
                 
                 if response.status_code == 200:
-                    # 4. Visualizziamo i dati BINARI dell'immagine (metodo più sicuro)
+                    # 4. Visualizziamo l'immagine
                     st.image(response.content, caption=f"{soggetto} in stile {pittore}", use_container_width=True)
                     st.success("Opera completata!")
-
-                st.download_button(
-                label="💾 Scarica questa opera",
-                data=response.content,
-                file_name=f"{soggetto}_{pittore}.jpg",
-                mime="image/jpeg"
-            )
+                    
+                    # 5. Tasto per scaricare l'immagine
+                    st.download_button(
+                        label="💾 Scarica questa opera",
+                        data=response.content,
+                        file_name=f"{soggetto}_{pittore}.jpg",
+                        mime="image/jpeg"
+                    )
                 else:
-                    st.error("Il servizio di pittura è momentaneamente occupato. Riprova tra pochi secondi.")
+                    st.error("Il servizio è momentaneamente occupato. Riprova tra pochi secondi.")
+            
             except Exception as e:
                 st.error(f"Errore di connessione: {e}")
-    #else:
-        #st.warning("Inserisci entrambi i campi.")
+    else:
+        st.warning("Per favore, inserisci sia l'artista che il soggetto.")
