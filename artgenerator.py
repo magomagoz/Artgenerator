@@ -10,14 +10,14 @@ st.image("banner3.png")
 
 # Input utente
 col1, col2 = st.columns(2)
-pittore = col1.text_input("Pittore (es. Van Gogh, Caravaggio)")
+pittore = col1.text_input("🎨 Pittore (es. Van Gogh, Caravaggio)")
 soggetto = col2.text_input("Soggetto (es. una città futuristica)")
 
 if st.button("Genera Visione Artistica"):
     if pittore and soggetto:
         with st.spinner(f"Il maestro {pittore} sta dipingendo..."):
             # 1. Creiamo il prompt
-            prompt_artistico = f"A unique oil painting of {soggetto} in the style of {pittore}, masterpiece, high quality."
+            prompt_artistico = f"Sono il pittore {pittore}, esperto del mio stile creativo e del mio tempo. Utilizzerò tutte le mie peculiarità per creare una immagine originale che rappresenti il {soggetto} e che sia immediatamente accostabile al mio specifico stile"
             prompt_encoded = urllib.parse.quote(prompt_artistico)
             seed = random.randint(1, 999999)
             
