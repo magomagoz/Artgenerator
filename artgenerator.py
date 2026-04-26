@@ -25,7 +25,13 @@ if st.button("Genera Visione Artistica"):
     if pittore and soggetto:
         with st.spinner(f"Il maestro {pittore} sta dipingendo..."):
             # 1. Creiamo il prompt
-            prompt_artistico = f"Sono il pittore {pittore}, esperto del mio stile creativo e del mio tempo. Utilizzerò tutte le mie peculiarità per creare una immagine originale che rappresenti il {soggetto} e che sia immediatamente accostabile al mio specifico stile"
+            prompt_artistico = (
+                f"I am the painter {pittore}, a master of my unique creative style and my historical era. "
+                f"I will now employ all my signature techniques and artistic vision to create an "
+                f"original masterpiece representing '{soggetto}'. This artwork must be instantly "
+                f"recognizable as my own work, capturing my specific brushwork, use of light, and emotional depth "
+                f"oil on canvas, museum quality, 8k resolution, highly detailed textures."
+            )
             prompt_encoded = urllib.parse.quote(prompt_artistico)
             seed = random.randint(1, 999999)
             
