@@ -2,7 +2,7 @@ import streamlit as st
 import urllib.parse
 import requests
 import random
-fpdf import FPDF
+import FPDF as fpdf
 import io 
 import os
 import requests
