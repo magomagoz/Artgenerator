@@ -142,13 +142,13 @@ if st.session_state.immagine_fatta is not None:
     st.success("Opera completata!")
     
         
-        # Generazione PDF
-        pdf_data = crea_pdf_completo(
-            st.session_state.pittore_corrente,
-            st.session_state.soggetto_corrente,
-            st.session_state.analisi_generata,
-            st.session_state.immagine_generata
-        )
+    # Generazione PDF
+    pdf_data = crea_pdf_completo(
+        st.session_state.pittore_corrente,
+        st.session_state.soggetto_corrente,
+        st.session_state.analisi_generata,
+        st.session_state.immagine_generata
+    )
         
     # Il pulsante di download ora non farà sparire nulla
     st.download_button(
