@@ -23,6 +23,11 @@ soggetto = col2.text_input("Soggetto (es. una città futuristica)")
 
 if st.button("Genera Visione Artistica"):
     if pittore and soggetto:
+        
+        # --- NOVITÀ: Cancelliamo la vecchia immagine appena premiamo il tasto ---
+        st.session_state.immagine_fatta = None 
+        # ------------------------------------------------------------------------
+
         with st.spinner(f"Il maestro {pittore} sta dipingendo..."):
             # 1. Creiamo il prompt
             prompt_artistico = (
@@ -39,16 +44,21 @@ if st.button("Genera Visione Artistica"):
             image_url = f"https://image.pollinations.ai/prompt/{prompt_encoded}?width=1024&height=768&nologo=true&seed={seed}"
             
             try:
-                response = requests.get(image_url, timeout=30)
+                # Ho alzato leggermente il timeout per evitare che Pollinations si arrenda troppo presto
+                response = requests.get(image_url, timeout=45) 
+                
                 if response.status_code == 200:
                     # SALVIAMO NELLO STATO DELLA SESSIONE
                     st.session_state.immagine_fatta = response.content
                     st.session_state.pittore_fatto = pittore
                     st.session_state.soggetto_fatto = soggetto
+                    
+                    # Forziamo un ricaricamento della pagina per far apparire subito l'immagine pulita
+                    st.rerun() 
                 else:
-                    st.error("Servizio momentaneamente occupato.")
+                    st.error("Servizio momentaneamente occupato. Il server gratuito è sovraccarico, riprova tra poco.")
             except Exception as e:
-                st.error(f"Errore: {e}")
+                st.error(f"Errore di connessione: L'API ci ha messo troppo tempo a rispondere.")
     else:
         st.warning("Inserisci entrambi i campi.")
 
