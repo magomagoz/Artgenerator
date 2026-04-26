@@ -39,8 +39,8 @@ if st.button("Genera Visione Artistica"):
                 file_name=f"{soggetto}_{pittore}.jpg",
                 mime="image/jpeg"
             )
-            else:
-                st.error("Il servizio di pittura è momentaneamente occupato. Riprova tra pochi secondi.")
+                else:
+                    st.error("Il servizio di pittura è momentaneamente occupato. Riprova tra pochi secondi.")
         except Exception as e:
             st.error(f"Errore di connessione: {e}")
     else:
