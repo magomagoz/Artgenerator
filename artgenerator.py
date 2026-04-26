@@ -30,14 +30,16 @@ if st.button("Genera Visione Artistica"):
 
         with st.spinner(f"Il maestro {pittore} sta dipingendo..."):
             # 1. Creiamo il prompt
+            
             prompt_artistico = (
+                f"A central, extreme close-up masterpiece painting exclusively focused on '{soggetto}' as the absolute main subject. "
+                f"The '{soggetto}' is prominently displayed in the center of the frame. "
                 f"I am the painter {pittore}, a master of my unique creative style and my historical era. "
-                f"I will now employ all my signature techniques and artistic vision to create an "
-                f"original masterpiece representing '{soggetto}' as its primary subject, positioned centrally in a close-up perspective. This artwork must be instantly "
-                f"recognizable as my own work, capturing my specific brushwork, use of light, and emotional depth "
-                f"oil on canvas, museum quality, 8k resolution, highly detailed textures."
-
+                f"I will now employ all my signature techniques and artistic vision to create an unmistakable and authentic signature style of '{soggetto}', "
+                f"featuring my specific brushwork, use of light, historical color palette, and emotional depth. "
+                f"Oil on canvas, museum quality, 8k resolution, highly detailed textures."
             )
+            
             prompt_encoded = urllib.parse.quote(prompt_artistico)
             seed = random.randint(1, 999999)
             
