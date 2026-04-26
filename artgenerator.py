@@ -94,12 +94,12 @@ if st.button("Genera Interpretazione Artistica e Immagine"):
         with st.spinner('Analizzando e dipingendo...'):
             try:
                 # 1. Testo
-                text_model = genai.GenerativeModel('gemini-1.5-flash')
+                text_model = genai.GenerativeModel('gemini-2.5-flash')
                 text_prompt = f"Critico d'arte: analizza '{soggetto_input}' nello stile di {pittore_input}. 3 punti: Tecnica, Composizione, Concetto."
                 text_response = text_model.generate_content(text_prompt)
                 
                 # 2. Immagine
-                image_model = genai.GenerativeModel('gemini-1.5-flash')
+                image_model = genai.GenerativeModel('gemini-2.5-flash')
                 img_desc_prompt = f"Create a detailed English prompt for an AI image generator: '{soggetto_input}' painted by {pittore_input}. focus on brushwork and lighting."
                 img_desc_res = image_model.generate_content(img_desc_prompt)
                 
