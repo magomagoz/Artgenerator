@@ -33,9 +33,10 @@ if st.button("Genera Visione Artistica"):
             prompt_artistico = (
                 f"I am the painter {pittore}, a master of my unique creative style and my historical era. "
                 f"I will now employ all my signature techniques and artistic vision to create an "
-                f"original masterpiece representing '{soggetto}'. This artwork must be instantly "
+                f"original masterpiece representing '{soggetto}' as its primary subject, positioned centrally in a close-up perspective. This artwork must be instantly "
                 f"recognizable as my own work, capturing my specific brushwork, use of light, and emotional depth "
                 f"oil on canvas, museum quality, 8k resolution, highly detailed textures."
+
             )
             prompt_encoded = urllib.parse.quote(prompt_artistico)
             seed = random.randint(1, 999999)
