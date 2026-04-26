@@ -32,7 +32,7 @@ if st.button("Genera Visione Artistica"):
             # 1. Creiamo il prompt
             
             prompt_artistico = (
-                f"A central, extreme close-up masterpiece painting exclusively focused on '{soggetto}' as the absolute main subject. "
+                #f"A central, extreme close-up masterpiece painting exclusively focused on '{soggetto}' as the absolute main subject. "
                 f"The '{soggetto}' is prominently displayed in the center of the frame. "
                 f"I am the painter {pittore}, a master of my unique creative style and my historical era. "
                 f"I will now employ all my signature techniques and artistic vision to create an unmistakable and authentic signature style of '{soggetto}', "
