@@ -20,29 +20,27 @@ class PDF(FPDF):
         self.set_font('Arial', 'I', 8)
         self.cell(0, 10, f'Pagina {self.page_no()}', 0, 0, 'C')
 
-
 def genera_analisi_ia(pittore, soggetto):
-    """Interroga l'IA testuale di Pollinations con parametri di pulizia testo."""
-    # Usiamo il parametro cache=True e model='openai' (o lasciamo default) per stabilità
-    prompt_testo = (f"Agisci come un critico d'arte esperto di {pittore}. "
-                    f"Scrivi una recensione approfondita, colta e originale in italiano (circa 500 parole) "
-                    f"sull'opera '{soggetto}' realizzata nello stile esatto di {pittore}. "
-                    f"Analizza tecnica, uso del colore e filosofia.")
+    # Modifichiamo il prompt per chiedere esplicitamente di evitare linguaggi inventati
+    prompt_testo = (f"Agisci come un critico d'arte accademico esperto di {pittore}. Scrivi una recensione originale, "
+                    f"in italiano corretto e formale di massimo 500 parole sull'opera '{soggetto}' in stile {pittore}. "
+                    f"Analizza tecnica, uso del colore e filosofia e usa un lessico tecnico reale. Evita simboli speciali e formattazione markdown complessa.")
     
-    # Aggiungiamo ?model=openai per usare un modello più capace di generare testi lunghi
     url_testo = f"https://text.pollinations.ai/{urllib.parse.quote(prompt_testo)}?model=openai"
     
     try:
-        res = requests.get(url_testo, timeout=30) # Aumentato timeout per testi lunghi
+        res = requests.get(url_testo, timeout=30)
         if res.status_code == 200:
             testo = res.text
-            if testo and len(testo) > 50: # Verifichiamo che non sia vuoto
-                return testo
-    except Exception as e:
-        st.error(f"Errore critico: {e}")
+            # --- PULIZIA AUTOMATICA DEI CARATTERI "SPORCHI" ---
+            # Rimuoviamo gli spazi speciali e i caratteri che FPDF interpreta come ?
+            testo = testo.replace('\xa0', ' ').replace('\u202f', ' ').replace('\u200b', '')
+            testo = testo.replace('’', "'").replace('“', '"').replace('”', '"').replace('–', '-')
+            return testo
+    except Exception:
+        pass
+    return f"Analisi dell'opera '{soggetto}' nello stile di {pittore}."
     
-    return f"L'opera analizzata traspone il soggetto '{soggetto}' nel linguaggio visivo tipico di {pittore}..."
-
 def crea_pdf_completo(pittore, soggetto, immagine_bytes):
     pdf = PDF()
     pdf.set_auto_page_break(auto=True, margin=15)
