@@ -65,7 +65,7 @@ if 'soggetto_fatto' not in st.session_state:
 
 # --- Input Utente ---
 col1, col2 = st.columns(2)
-pittore = col1.text_input("🎨 Nome completo del Pittore (+ movimento artistico e/o tecnica specifica")
+pittore = col1.text_input("🎨 Nome completo del Pittore (+ movimento artistico e/o tecnica specifica)")
 soggetto = col2.text_input("Soggetto da dipingere")
 
 if st.button("Genera Visione Artistica"):
@@ -74,9 +74,7 @@ if st.button("Genera Visione Artistica"):
         st.session_state.immagine_fatta = None 
 
         with st.spinner(f"Il maestro {pittore} sta dipingendo..."):
-                    
-
-            
+                               
             prompt_artistico = (
                 f"A definitive masterpiece that reimagines '{soggetto}' entirely through the unique visionary lens, "
                 f"core compositional principles, and most famous recurring motifs of {pittore}. "
