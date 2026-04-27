@@ -22,7 +22,7 @@ class PDF(FPDF):
 
 def genera_analisi_ia(pittore, soggetto):
     """Interroga l'IA di DuckDuckGo per una recensione artistica gratuita."""
-    prompt = f"Agisci come un critico d'arte. Scrivi una recensione breve (max 80 parole) su un quadro di '{soggetto}' fatto nello stile di '{pittore}'. Sii poetico e colto."
+    prompt = f"Agisci come un critico d'arte esperto di {pittore}. Scrivi una recensione (max 1000 parole) su questa interpretazione di '{soggetto}' fatto nello stile caratteristico di '{pittore}'. Sii poetico, colto e originale."
     try:
         with DDGS() as ddgs:
             # Usiamo il modello Llama 3 (gratuito e senza chiavi API)
