@@ -20,19 +20,28 @@ class PDF(FPDF):
         self.set_font('Arial', 'I', 8)
         self.cell(0, 10, f'Pagina {self.page_no()}', 0, 0, 'C')
 
+
 def genera_analisi_ia(pittore, soggetto):
-    """Interroga l'IA testuale gratuita di Pollinations per una recensione specifica."""
-    # Chiediamo all'IA di generare una vera critica d'arte
-    prompt_testo = f"Agisci come un critico d'arte esperto di {pittore}. Scrivi una recensione elegante e tecnica di massimo 1000 parole in italiano su un'opera che raffigura '{soggetto}' realizzata seguendo fedelmente lo stile, la filosofia e i motivi iconici di {pittore}."
-    url_testo = f"https://text.pollinations.ai/{urllib.parse.quote(prompt_testo)}"
+    """Interroga l'IA testuale di Pollinations con parametri di pulizia testo."""
+    # Usiamo il parametro cache=True e model='openai' (o lasciamo default) per stabilità
+    prompt_testo = (f"Agisci come un critico d'arte esperto di {pittore}. "
+                    f"Scrivi una recensione approfondita, colta e originale in italiano (circa 500 parole) "
+                    f"sull'opera '{soggetto}' realizzata nello stile esatto di {pittore}. "
+                    f"Analizza tecnica, uso del colore e filosofia.")
+    
+    # Aggiungiamo ?model=openai per usare un modello più capace di generare testi lunghi
+    url_testo = f"https://text.pollinations.ai/{urllib.parse.quote(prompt_testo)}?model=openai"
     
     try:
-        res = requests.get(url_testo, timeout=15)
+        res = requests.get(url_testo, timeout=30) # Aumentato timeout per testi lunghi
         if res.status_code == 200:
-            return res.text
-    except:
-        pass
-    return f"L'opera analizzata traspone il soggetto '{soggetto}' nel linguaggio visivo tipico di {pittore}, fondendo forma e concetto in un'armonia cromatica coerente con la storia del maestro."
+            testo = res.text
+            if testo and len(testo) > 50: # Verifichiamo che non sia vuoto
+                return testo
+    except Exception as e:
+        st.error(f"Errore critico: {e}")
+    
+    return f"L'opera analizzata traspone il soggetto '{soggetto}' nel linguaggio visivo tipico di {pittore}..."
 
 def crea_pdf_completo(pittore, soggetto, immagine_bytes):
     pdf = PDF()
@@ -51,8 +60,10 @@ def crea_pdf_completo(pittore, soggetto, immagine_bytes):
         testo_analisi = genera_analisi_ia(pittore, soggetto)
     
     pdf.set_font("Arial", size=11)
-    # Pulizia caratteri per evitare errori FPDF
-    testo_pulito = testo_analisi.encode('latin-1', 'replace').decode('latin-1')
+    testo_pulito = testo_analisi.replace('’', "'").replace('“', '"').replace('”', '"')
+    testo_pulito = testo_pulito.encode('latin-1', 'replace').decode('latin-1')
+    pdf.multi_cell(0, 8, txt=testo_pulito)
+
     pdf.multi_cell(0, 8, txt=testo_pulito)
 
     # --- PAGINA 2: IMMAGINE (Centrata e non tagliata) ---
@@ -96,16 +107,12 @@ if st.button("Genera Visione Artistica"):
         st.session_state.immagine_fatta = None 
 
         with st.spinner(f"Il maestro {pittore} sta dipingendo..."):
-            # ... (logica di generazione prompt e richiesta URL)
-                               
             prompt_artistico = (
-                f"A definitive masterpiece that reimagines '{soggetto}' entirely through the unique visionary lens, "
-                f"core compositional principles, and most famous recurring motifs of {pittore}. "
-                f"The absolute primary focus is on how {pittore} would structure reality, color, and form. "
-                f"This artwork must strictly integrate {pittore}'s signature aesthetic philosophy—whether it be heavy kinetic impasto, "
-                f"delicate luminous glazes, abstract geometric fragmentation, or flat patterned linework—"
-                f"applying it directly to '{soggetto}'. It must feel like an authentic discovery from {pittore}'s main body of work. "
-                f"Highest quality detailed textures, 8k resolution."
+                f"A definitive professional masterpiece of '{soggetto}' by {pittore}. "
+                f"Strictly adopt the authentic visual language, historical medium, and specific surface texture of {pittore}. "
+                f"If the artist uses flat graphics, use flat graphics. If they use glazes, use glazes. "
+                f"Incorporate iconic motifs and the philosophical essence of {pittore}'s work. "
+                f"Museum quality, highly detailed, 8k resolution, authentic aesthetic."
             )
             
             prompt_encoded = urllib.parse.quote(prompt_artistico)
