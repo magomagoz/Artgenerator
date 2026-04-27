@@ -75,15 +75,16 @@ if st.button("Genera Visione Artistica"):
 
         with st.spinner(f"Il maestro {pittore} sta dipingendo..."):
                     
+
+            
             prompt_artistico = (
-                f"A definitive masterpiece of '{soggetto}', created through the iconic visual language of {pittore}. "
-                f"This artwork must integrate the most famous recurring motifs, symbolic elements, and "
-                f"conceptual paradoxes that define {pittore}'s unique perspective on reality. "
-                f"The composition must strictly adhere to the artist's historical color palette, "
-                f"distinctive use of light and shadow, and authentic brushwork textures. "
-                f"Every detail of '{soggetto}' should feel like an original discovery from the artist's "
-                f"private collection, blending their specific aesthetic philosophy with the subject. "
-                f"Oil on canvas, museum quality, 8k resolution, highly detailed."
+                f"A definitive masterpiece that reimagines '{soggetto}' entirely through the unique visionary lens, "
+                f"core compositional principles, and most famous recurring motifs of {pittore}. "
+                f"The absolute primary focus is on how {pittore} would structure reality, color, and form. "
+                f"This artwork must strictly integrate {pittore}'s signature aesthetic philosophy—whether it be heavy kinetic impasto, "
+                f"delicate luminous glazes, abstract geometric fragmentation, or flat patterned linework—"
+                f"applying it directly to '{soggetto}'. It must feel like an authentic discovery from {pittore}'s main body of work. "
+                f"Highest quality detailed textures, oil on canvas (or applicable media), 8k resolution."
             )
             
             prompt_encoded = urllib.parse.quote(prompt_artistico)
