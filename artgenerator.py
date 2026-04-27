@@ -5,6 +5,7 @@ import random
 from fpdf import FPDF  # CORRETTO: Sintassi di importazione esatta
 import os
 import time # Aggiungi questo import in alto
+from duckduckgo_search import DDGS
 
 # --- Funzione PDF Avanzata (Adattata per sola Immagine/Titolo) ---
 class PDF(FPDF):
@@ -19,39 +20,49 @@ class PDF(FPDF):
         self.set_font('Arial', 'I', 8)
         self.cell(0, 10, f'Pagina {self.page_no()}', 0, 0, 'C')
 
+def genera_analisi_ia(pittore, soggetto):
+    """Interroga l'IA di DuckDuckGo per una recensione artistica gratuita."""
+    prompt = f"Agisci come un critico d'arte. Scrivi una recensione breve (max 80 parole) su un quadro di '{soggetto}' fatto nello stile di '{pittore}'. Sii poetico e colto."
+    try:
+        with DDGS() as ddgs:
+            # Usiamo il modello Llama 3 (gratuito e senza chiavi API)
+            results = ddgs.chat(prompt, model="llama-3-70b")
+            return results
+    except Exception:
+        return f"L'opera cattura l'essenza di {soggetto} attraverso i canoni estetici di {pittore}, in una fusione cromatica di raro vigore."
+
 def crea_pdf_completo(pittore, soggetto, immagine_bytes):
     pdf = PDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     
-    # --- PAGINA 1: ANALISI DEL CRITICO ---
+    # --- PAGINA 1: ANALISI ---
     pdf.add_page()
     pdf.set_font("Arial", 'B', 16)
-    pdf.cell(0, 10, f"Dossier Critico: {soggetto}", 0, 1, 'L')
+    pdf.cell(0, 10, f"Dossier: {soggetto.capitalize()}", 0, 1, 'L')
     pdf.set_font("Arial", 'I', 14)
-    pdf.cell(0, 10, f"Nello stile di {pittore}", 0, 1, 'L')
+    pdf.cell(0, 10, f"Stile: {pittore}", 0, 1, 'L')
     pdf.ln(10)
     
-    # Testo del Critico d'Arte
+    # Recupero analisi dall'IA
+    with st.spinner("Il critico d'arte sta scrivendo..."):
+        testo_analisi = genera_analisi_ia(pittore, soggetto)
+    
     pdf.set_font("Arial", size=11)
-    prompt_critico = f"Sei un critico d'arte esperto di {pittore}. Analizza questa immagine nello stile tecnico e compositivo di {pittore}."    
+    # Pulizia caratteri per evitare errori FPDF
+    testo_pulito = testo_analisi.encode('latin-1', 'replace').decode('latin-1')
+    pdf.multi_cell(0, 8, txt=testo_pulito)
 
-    pdf.multi_cell(0, 8, txt=prompt_critico)
-
-    # --- PAGINA 2: L'OPERA (Senza ritagli) ---
+    # --- PAGINA 2: IMMAGINE (Centrata e non tagliata) ---
     if immagine_bytes:
-        pdf.add_page(orientation='L') # Pagina orizzontale per rispettare le proporzioni 1024x768
-        temp_img_path = "temp_pdf_image.jpg"
-        with open(temp_img_path, "wb") as f:
+        pdf.add_page(orientation='L') 
+        temp_img = f"temp_{random.randint(1,999)}.jpg"
+        with open(temp_img, "wb") as f:
             f.write(immagine_bytes)
         
-        # 'w=260' assicura che rimanga un margine e l'immagine non venga tagliata sotto
-        # Le coordinate x=15 e y=20 centrano l'immagine nella pagina A4 orizzontale
-        pdf.image(temp_img_path, x=15, y=20, w=260) 
-        
-        try:
-            os.remove(temp_img_path)
-        except:
-            pass
+        # Parametri ottimizzati: x=25, y=20, larghezza=245 (su 297mm totali)
+        # Questo garantisce che non venga mai tagliata la parte inferiore
+        pdf.image(temp_img, x=25, y=20, w=245) 
+        os.remove(temp_img)
     
     return pdf.output(dest='S').encode('latin-1')
 
@@ -119,7 +130,6 @@ if st.button("Genera Visione Artistica"):
                 st.error("Errore di connessione: L'API ci ha messo troppo tempo a rispondere.")
     else:
         st.warning("Inserisci entrambi i campi.")
-
 
 # --- MOSTRA L'IMMAGINE E I PULSANTI DOWNLOAD ---
 if st.session_state.immagine_fatta is not None:
