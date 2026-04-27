@@ -33,17 +33,8 @@ def crea_pdf_completo(pittore, soggetto, immagine_bytes):
     
     # Testo del Critico d'Arte
     pdf.set_font("Arial", size=11)
-    analisi_critica = (
-        f"L'opera qui presentata non è una mera riproduzione del soggetto '{soggetto}', "
-        f"ma una trasfigurazione ontologica secondo i canoni estetici di {pittore}. "
-        f"Il critico osserva come la struttura compositiva rispetti rigorosamente il linguaggio "
-        f"visivo del maestro, dove la luce non solo illumina, ma definisce lo spazio e il tempo. "
-        f"Le pennellate, cariche di una tensione emotiva tipica della maturità di {pittore}, "
-        f"elevano il quotidiano a una dimensione metafisica, invitando lo spettatore a "
-        f"decodificare i simboli nascosti dietro la superficie pittorica. "
-        f"In questo dossier, l'intelligenza artificiale agisce come l'allievo che ha assorbito "
-        f"l'essenza filosofica del maestro per dare vita a una nuova, inedita visione."
-    )
+    prompt_critico = f"Sei un critico d'arte esperto di {pittore}. Analizza questa immagine nello stile tecnico e compositivo di {pittore}."    
+
     pdf.multi_cell(0, 8, txt=analisi_critica)
 
     # --- PAGINA 2: L'OPERA (Senza ritagli) ---
@@ -119,7 +110,7 @@ if st.button("Genera Visione Artistica"):
                     # --- LOGICA DEL TIMER ---
                     placeholder = st.empty()
                     for seconds in range(10, 0, -1):
-                        placeholder.warning(f"⏳ Sistema in raffreddamento... Pronto per una nuova opera tra {seconds} secondi.")
+                        placeholder.warning(f"⏳ Pronto per una nuova opera tra {seconds} secondi.")
                         time.sleep(1)
                     placeholder.success("✅ Pronto per una nuova generazione!")
                     
