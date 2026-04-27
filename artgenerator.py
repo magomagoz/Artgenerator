@@ -5,7 +5,7 @@ import random
 from fpdf import FPDF  # CORRETTO: Sintassi di importazione esatta
 import os
 import time # Aggiungi questo import in alto
-from duckduckgo_search import DDGS
+#from duckduckgo_search import DDGS
 
 # --- Funzione PDF Avanzata (Adattata per sola Immagine/Titolo) ---
 class PDF(FPDF):
