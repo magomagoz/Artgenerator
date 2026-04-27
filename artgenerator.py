@@ -155,7 +155,7 @@ if st.session_state.immagine_fatta is not None:
         st.download_button(
             label="🖼️ Scarica solo l'Immagine (JPG)",
             data=st.session_state.immagine_fatta,
-            file_name=f"{st.session_state.soggetto_fatto}_{st.session_state.pittore_fatto}.jpg",
+            file_name=f"Soggetto: {st.session_state.soggetto_fatto} realizzato dal maestro {st.session_state.pittore_fatto}.jpg",
             mime="image/jpeg"
         )
         
@@ -170,6 +170,6 @@ if st.session_state.immagine_fatta is not None:
         st.download_button(
             label="📄 Scarica Dossier PDF",
             data=pdf_data,
-            file_name=f"Dossier_{st.session_state.pittore_fatto}.pdf",
+            file_name=f"Recensione critica di {st.session_state.soggetto_fatto} del maestro {st.session_state.pittore_fatto}.pdf",
             mime="application/pdf"
         )
