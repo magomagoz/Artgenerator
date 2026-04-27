@@ -65,8 +65,8 @@ if 'soggetto_fatto' not in st.session_state:
 
 # --- Input Utente ---
 col1, col2 = st.columns(2)
-pittore = col1.text_input("🎨 Pittore (es. Van Gogh, Caravaggio)")
-soggetto = col2.text_input("Soggetto (es. una città futuristica)")
+pittore = col1.text_input("🎨 Nome completo del Pittore (+ movimento artistico e/o tecnica specifica")
+soggetto = col2.text_input("Soggetto da dipingere")
 
 if st.button("Genera Visione Artistica"):
     if pittore and soggetto:
