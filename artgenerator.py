@@ -1,4 +1,4 @@
-Import streamlit as st
+import streamlit as st
 import urllib.parse
 import requests
 import random
