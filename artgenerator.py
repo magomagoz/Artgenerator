@@ -114,9 +114,9 @@ if st.button("Genera Visione Artistica"):
 
         with st.spinner(f"Il maestro {pittore} sta dipingendo..."):
             prompt_artistico = (
-                f"A definitive professional masterpiece of '{soggetto}' by {pittore}. "
-                f"Strictly adopt the authentic visual language, historical medium, and specific surface texture of {pittore}. "
-                f"If the artist uses flat graphics, use flat graphics. If they use glazes, use glazes. "
+                f"Place a definitive professional masterpiece of '{soggetto}' in the center of frame, I am {pittore} and "
+                f"adopt my authentic visual language, historical medium, and specific surface texture of my historical time. "
+                f"If my art uses flat graphics, use flat graphics. If they use glazes, use glazes. "
                 f"Incorporate iconic motifs and the philosophical essence of {pittore}'s work. "
                 f"Museum quality, highly detailed, 8k resolution, authentic aesthetic."
             )
