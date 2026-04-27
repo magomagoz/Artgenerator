@@ -22,9 +22,13 @@ class PDF(FPDF):
 
 def genera_analisi_ia(pittore, soggetto):
     # Modifichiamo il prompt per chiedere esplicitamente di evitare linguaggi inventati
-    prompt_testo = (f"Agisci come un critico d'arte accademico esperto di {pittore}. Scrivi una recensione originale, "
-                    f"in italiano corretto e formale di massimo 500 parole sull'opera '{soggetto}' in stile {pittore}. "
-                    f"Analizza tecnica, uso del colore e filosofia e usa un lessico tecnico reale. Evita simboli speciali e formattazione markdown complessa.")
+    prompt_testo = (
+        f"Agisci come un critico d'arte. Scrivi una recensione tecnica di 400 parole in italiano "
+        f"sull'opera '{soggetto}' realizzata da {pittore}. "
+        f"IMPORTANTE: L'opera rappresenta solo ed esclusivamente '{soggetto}'. "
+        f"Non menzionare altri soggetti tipici dell'autore (come ballerine, gigli o cavalli) "
+        f"se non sono il soggetto richiesto. Concentrati sulla tecnica e sulla filosofia dello stile."
+    )
     
     url_testo = f"https://text.pollinations.ai/{urllib.parse.quote(prompt_testo)}?model=openai"
     
@@ -114,11 +118,12 @@ if st.button("Genera Visione Artistica"):
 
         with st.spinner(f"Il maestro {pittore} sta dipingendo..."):
             prompt_artistico = (
-                f"Place a definitive professional masterpiece of '{soggetto}' in the center of frame, I am {pittore} and "
-                f"adopt my authentic visual language, historical medium, and specific surface texture of my historical time. "
-                f"If my art uses flat graphics, use flat graphics. If they use glazes, use glazes. "
-                f"Incorporate iconic motifs and the philosophical essence of {pittore}'s work. "
-                f"Museum quality, highly detailed, 8k resolution, authentic aesthetic."
+                f"A centered, symmetrical professional masterpiece depicting ONLY '{soggetto}' as the absolute main focus. "
+                f"The subject '{soggetto}' is placed in the dead center of the frame. "
+                f"Style: exact recreation of {pittore}'s unique visual language. "
+                f"Strictly avoid any typical subjects of {pittore} that are not '{soggetto}' (no dancers, no unintended figures). "
+                f"Use the authentic historical medium, color palette, and surface texture specific to {pittore}. "
+                f"Museum quality, 8k resolution, perfectly composed, focused on '{soggetto}'."
             )
             
             prompt_encoded = urllib.parse.quote(prompt_artistico)
