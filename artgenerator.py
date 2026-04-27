@@ -4,6 +4,7 @@ import requests
 import random
 from fpdf import FPDF  # CORRETTO: Sintassi di importazione esatta
 import os
+import time # Aggiungi questo import in alto
 
 # --- Funzione PDF Avanzata (Adattata per sola Immagine/Titolo) ---
 class PDF(FPDF):
@@ -70,10 +71,10 @@ soggetto = col2.text_input("Soggetto da dipingere")
 
 if st.button("Genera Visione Artistica"):
     if pittore and soggetto:
-        # Cancelliamo la vecchia immagine appena premiamo il tasto
         st.session_state.immagine_fatta = None 
 
         with st.spinner(f"Il maestro {pittore} sta dipingendo..."):
+            # ... (logica di generazione prompt e richiesta URL)
                                
             prompt_artistico = (
                 f"A definitive masterpiece that reimagines '{soggetto}' entirely through the unique visionary lens, "
@@ -97,9 +98,15 @@ if st.button("Genera Visione Artistica"):
                     st.session_state.immagine_fatta = response.content
                     st.session_state.pittore_fatto = pittore
                     st.session_state.soggetto_fatto = soggetto
+                    
+                    # --- LOGICA DEL TIMER ---
+                    placeholder = st.empty()
+                    for seconds in range(10, 0, -1):
+                        placeholder.warning(f"⏳ Sistema in raffreddamento... Pronto per una nuova opera tra {seconds} secondi.")
+                        time.sleep(1)
+                    placeholder.success("✅ Pronto per una nuova generazione!")
+                    
                     st.rerun() 
-                else:
-                    st.error("Servizio momentaneamente occupato. Il server gratuito è sovraccarico, riprova tra poco.")
             except Exception as e:
                 st.error("Errore di connessione: L'API ci ha messo troppo tempo a rispondere.")
     else:
