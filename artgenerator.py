@@ -50,7 +50,7 @@ def crea_pdf_completo(pittore, soggetto, immagine_bytes):
     # --- PAGINA 1: ANALISI ---
     pdf.add_page()
     pdf.set_font("Arial", 'B', 16)
-    pdf.cell(0, 10, f"Dossier: {soggetto.capitalize()}", 0, 1, 'L')
+    pdf.cell(0, 10, f"Dossier: {soggetto.capitalize()} del maestro {pittore}", 0, 1, 'L')
     pdf.set_font("Arial", 'I', 14)
     pdf.cell(0, 10, f"Stile: {pittore}", 0, 1, 'L')
     pdf.ln(10)
