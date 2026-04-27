@@ -1,4 +1,4 @@
-google-generativeai
+streamlit
 requests
 fpdf
-streamlit
+duckduckgo_search
