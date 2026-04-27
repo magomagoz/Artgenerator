@@ -55,7 +55,6 @@ try:
 except:
     st.warning("Banner non trovato. Assicurati che 'banner3.png' sia nella cartella del progetto.")
 
-
 # --- Inizializzazione Unica dello Stato della Sessione ---
 if 'immagine_fatta' not in st.session_state:
     st.session_state.immagine_fatta = None
@@ -63,7 +62,6 @@ if 'pittore_fatto' not in st.session_state:
     st.session_state.pittore_fatto = ""
 if 'soggetto_fatto' not in st.session_state:
     st.session_state.soggetto_fatto = ""
-
 
 # --- Input Utente ---
 col1, col2 = st.columns(2)
@@ -76,11 +74,10 @@ if st.button("Genera Visione Artistica"):
         st.session_state.immagine_fatta = None 
 
         with st.spinner(f"Il maestro {pittore} sta dipingendo..."):
-            
+                    
             prompt_artistico = (
-                f"The '{soggetto}' is prominently displayed in the center of the frame. "
                 f"I am the painter {pittore}, a master of my unique creative style and my historical era. "
-                f"I will now employ all my signature techniques and artistic vision to create an unmistakable and authentic signature style of '{soggetto}', "
+                f"I will now employ all my signature techniques and artistic vision to create an unmistakable and authentic signature style of '{soggetto}', that is prominently displayed in the center of the frame. ""
                 f"featuring my specific brushwork, use of light, historical color palette, and emotional depth. "
                 f"Oil on canvas, museum quality, 8k resolution, highly detailed textures."
             )
