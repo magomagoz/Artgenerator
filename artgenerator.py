@@ -21,15 +21,18 @@ class PDF(FPDF):
         self.cell(0, 10, f'Pagina {self.page_no()}', 0, 0, 'C')
 
 def genera_analisi_ia(pittore, soggetto):
-    """Interroga l'IA di DuckDuckGo per una recensione artistica gratuita."""
-    prompt = f"Agisci come un critico d'arte esperto di {pittore}. Scrivi una recensione (max 1000 parole) su questa interpretazione di '{soggetto}' fatto nello stile caratteristico di '{pittore}'. Sii poetico, colto e originale."
+    """Interroga l'IA testuale gratuita di Pollinations per una recensione specifica."""
+    # Chiediamo all'IA di generare una vera critica d'arte
+    prompt_testo = f"Agisci come un critico d'arte esperto di {pittore}. Scrivi una recensione elegante e tecnica di massimo 1000 parole in italiano su un'opera che raffigura '{soggetto}' realizzata seguendo fedelmente lo stile, la filosofia e i motivi iconici di {pittore}."
+    url_testo = f"https://text.pollinations.ai/{urllib.parse.quote(prompt_testo)}"
+    
     try:
-        with DDGS() as ddgs:
-            # Usiamo il modello Llama 3 (gratuito e senza chiavi API)
-            results = ddgs.chat(prompt, model="llama-3-70b")
-            return results
-    except Exception:
-        return f"L'opera cattura l'essenza di {soggetto} attraverso i canoni estetici di {pittore}, in una fusione cromatica di raro vigore."
+        res = requests.get(url_testo, timeout=15)
+        if res.status_code == 200:
+            return res.text
+    except:
+        pass
+    return f"L'opera analizzata traspone il soggetto '{soggetto}' nel linguaggio visivo tipico di {pittore}, fondendo forma e concetto in un'armonia cromatica coerente con la storia del maestro."
 
 def crea_pdf_completo(pittore, soggetto, immagine_bytes):
     pdf = PDF()
