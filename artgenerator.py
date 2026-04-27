@@ -64,8 +64,6 @@ def crea_pdf_completo(pittore, soggetto, immagine_bytes):
     testo_pulito = testo_pulito.encode('latin-1', 'replace').decode('latin-1')
     pdf.multi_cell(0, 8, txt=testo_pulito)
 
-    pdf.multi_cell(0, 8, txt=testo_pulito)
-
     # --- PAGINA 2: IMMAGINE (Centrata e non tagliata) ---
     if immagine_bytes:
         pdf.add_page(orientation='L') 
