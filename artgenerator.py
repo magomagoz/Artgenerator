@@ -77,7 +77,7 @@ if st.button("Genera Visione Artistica"):
                     
             prompt_artistico = (
                 f"I am the painter {pittore}, a master of my unique creative style and my historical era. "
-                f"I will now employ all my signature techniques and artistic vision to create an unmistakable and authentic signature style of '{soggetto}', that is prominently displayed in the center of the frame. ""
+                f"I will now employ all my signature techniques and artistic vision to create an unmistakable and authentic signature style of '{soggetto}', that is prominently displayed in the center of the frame. "
                 f"featuring my specific brushwork, use of light, historical color palette, and emotional depth. "
                 f"Oil on canvas, museum quality, 8k resolution, highly detailed textures."
             )
