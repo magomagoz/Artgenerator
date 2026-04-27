@@ -21,31 +21,48 @@ class PDF(FPDF):
 
 def crea_pdf_completo(pittore, soggetto, immagine_bytes):
     pdf = PDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
     
-    # --- PAGINA 1: TITOLO ---
+    # --- PAGINA 1: ANALISI DEL CRITICO ---
     pdf.add_page()
     pdf.set_font("Arial", 'B', 16)
-    pdf.cell(0, 10, f"Soggetto: {soggetto}", 0, 1, 'L')
+    pdf.cell(0, 10, f"Dossier Critico: {soggetto}", 0, 1, 'L')
     pdf.set_font("Arial", 'I', 14)
-    pdf.cell(0, 10, f"Interpretato nello stile di: {pittore}", 0, 1, 'L')
+    pdf.cell(0, 10, f"Nello stile di {pittore}", 0, 1, 'L')
     pdf.ln(10)
-    pdf.set_font("Arial", size=12)
-    pdf.multi_cell(0, 10, txt="Di seguito, l'interpretazione visiva originale generata dall'Intelligenza Artificiale, che unisce le tecniche storiche del maestro con il soggetto richiesto.")
+    
+    # Testo del Critico d'Arte
+    pdf.set_font("Arial", size=11)
+    analisi_critica = (
+        f"L'opera qui presentata non è una mera riproduzione del soggetto '{soggetto}', "
+        f"ma una trasfigurazione ontologica secondo i canoni estetici di {pittore}. "
+        f"Il critico osserva come la struttura compositiva rispetti rigorosamente il linguaggio "
+        f"visivo del maestro, dove la luce non solo illumina, ma definisce lo spazio e il tempo. "
+        f"Le pennellate, cariche di una tensione emotiva tipica della maturità di {pittore}, "
+        f"elevano il quotidiano a una dimensione metafisica, invitando lo spettatore a "
+        f"decodificare i simboli nascosti dietro la superficie pittorica. "
+        f"In questo dossier, l'intelligenza artificiale agisce come l'allievo che ha assorbito "
+        f"l'essenza filosofica del maestro per dare vita a una nuova, inedita visione."
+    )
+    pdf.multi_cell(0, 8, txt=analisi_critica)
 
-    # --- PAGINA 2: IMMAGINE LANDSCAPE ---
+    # --- PAGINA 2: L'OPERA (Senza ritagli) ---
     if immagine_bytes:
-        pdf.add_page(orientation='L')
-        # Usiamo un nome temporaneo sicuro
-        temp_img_path = "temp_image.jpg"
+        pdf.add_page(orientation='L') # Pagina orizzontale per rispettare le proporzioni 1024x768
+        temp_img_path = "temp_pdf_image.jpg"
         with open(temp_img_path, "wb") as f:
             f.write(immagine_bytes)
         
-        # Inseriamo l'immagine a tutta pagina
-        pdf.image(temp_img_path, x=10, y=10, w=277) 
-        os.remove(temp_img_path) # Puliamo il file temporaneo
+        # 'w=260' assicura che rimanga un margine e l'immagine non venga tagliata sotto
+        # Le coordinate x=15 e y=20 centrano l'immagine nella pagina A4 orizzontale
+        pdf.image(temp_img_path, x=15, y=20, w=260) 
+        
+        try:
+            os.remove(temp_img_path)
+        except:
+            pass
     
     return pdf.output(dest='S').encode('latin-1')
-
 
 # --- Configurazione Base ---
 st.set_page_config(page_title="Il Pennello del Tempo", page_icon="🎨", layout="wide")
