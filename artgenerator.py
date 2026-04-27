@@ -52,14 +52,24 @@ def crea_pdf_completo(pittore, soggetto, immagine_bytes):
     pdf.set_font("Arial", 'I', 14)
     pdf.cell(0, 10, f"Stile: {pittore}", 0, 1, 'L')
     pdf.ln(10)
+
+
     
     # Recupero analisi dall'IA
     with st.spinner("Il critico d'arte sta scrivendo..."):
         testo_analisi = genera_analisi_ia(pittore, soggetto)
     
+    # Rimuoviamo eventuali tag residui o codici IA
+    import re
+    testo_pulito = re.sub(r'<[^>]+>', '', testo_analisi) # Rimuove qualsiasi cosa tra < >
+    
+    # Forziamo la conversione in stringa pulita per FPDF
+    testo_per_pdf = testo_pulito.encode('ascii', 'ignore').decode('ascii') 
+    # Nota: 'ascii ignore' è drastico ma elimina ogni punto interrogativo. 
+    # Se vuoi tenere gli accenti, usa la riga sotto:
+    testo_per_pdf = testo_pulito.encode('latin-1', 'replace').decode('latin-1').replace('?', '')
+        
     pdf.set_font("Arial", size=11)
-    testo_pulito = testo_analisi.replace('’', "'").replace('“', '"').replace('”', '"')
-    testo_pulito = testo_pulito.encode('latin-1', 'replace').decode('latin-1')
     pdf.multi_cell(0, 8, txt=testo_pulito)
 
     # --- PAGINA 2: IMMAGINE (Centrata e non tagliata) ---
