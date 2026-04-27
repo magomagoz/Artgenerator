@@ -35,7 +35,7 @@ def crea_pdf_completo(pittore, soggetto, immagine_bytes):
     pdf.set_font("Arial", size=11)
     prompt_critico = f"Sei un critico d'arte esperto di {pittore}. Analizza questa immagine nello stile tecnico e compositivo di {pittore}."    
 
-    pdf.multi_cell(0, 8, txt=analisi_critica)
+    pdf.multi_cell(0, 8, txt=prompt_critico)
 
     # --- PAGINA 2: L'OPERA (Senza ritagli) ---
     if immagine_bytes:
