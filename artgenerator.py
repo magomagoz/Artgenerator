@@ -103,60 +103,42 @@ pittore = col1.text_input("🎨 Nome completo del Pittore (movimento artistico e
 soggetto = col2.text_input("Soggetto da dipingere")
 
 if st.button("Genera Visione Artistica"):
-    if not api_key_input:
-        st.error("⚠️ Inserisci la tua API Key di Google nella barra laterale a sinistra per poter dipingere!")
-        st.stop()
-        
     if pittore and soggetto:
         st.session_state.immagine_fatta = None 
 
-        with st.spinner(f"Il maestro {pittore} sta dipingendo nei laboratori Google..."):
+        with st.spinner(f"Il maestro {pittore} sta dipingendo..."):
+            # Prompt rinforzato per evitare allucinazioni (ballerine, ecc.)
             prompt_artistico = (
                 f"A centered, symmetrical professional masterpiece depicting ONLY '{soggetto}' as the absolute main focus. "
                 f"The subject '{soggetto}' is placed in the dead center of the frame. "
                 f"Style: exact recreation of {pittore}'s unique visual language. "
-                f"Strictly avoid any typical subjects of {pittore} that are not '{soggetto}' (no dancers, no unintended figures). "
-                f"Use the authentic historical medium, color palette, and surface texture specific to {pittore}. "
-                f"Museum quality, 8k resolution, perfectly composed, focused on '{soggetto}'."
+                f"Strictly avoid any typical subjects of {pittore} that are not '{soggetto}'. "
+                f"Use the authentic historical medium and surface texture of {pittore}. "
+                f"Museum quality, 8k resolution, authentic aesthetic."
             )
             
+            prompt_encoded = urllib.parse.quote(prompt_artistico)
+            seed = random.randint(1, 999999)
+            
+            # Usiamo Pollinations che è gratuito e non richiede API Key
+            image_url = f"https://image.pollinations.ai/prompt/{prompt_encoded}?width=1024&height=768&nologo=true&seed={seed}"
+            
             try:
-                # --- INIZIALIZZAZIONE DEL CLIENT GOOGLE ---
-                client = genai.Client(api_key=api_key_input)
+                response = requests.get(image_url, timeout=45) 
                 
-                # --- CHIAMATA AL MODELLO IMAGEN 3 ---
-                response = client.models.generate_images(
-                    model='imagen-2.0',
-                    prompt=prompt_artistico,
-                    config=types.GenerateImagesConfig(
-                        number_of_images=1,
-                        output_mime_type="image/jpeg",
-                        aspect_ratio="4:3", # Formato perfetto per non venire tagliato nel PDF
-                        person_generation="ALLOW_ADULT" # Evita falsi positivi di censura su volti storici
-                    )
-                )
-                
-                # Estrazione dei Bytes dell'immagine
-                if response.generated_images:
-                    image_bytes = response.generated_images[0].image.image_bytes
-                    
-                    st.session_state.immagine_fatta = image_bytes
+                if response.status_code == 200:
+                    st.session_state.immagine_fatta = response.content
                     st.session_state.pittore_fatto = pittore
                     st.session_state.soggetto_fatto = soggetto
                     
-                    # --- LOGICA DEL TIMER ---
                     placeholder = st.empty()
-                    for seconds in range(10, 0, -1):
-                        placeholder.warning(f"⏳ Pronto per una nuova opera tra {seconds} secondi.")
+                    for seconds in range(5, 0, -1):
+                        placeholder.warning(f"⏳ Elaborazione completata in {seconds} secondi...")
                         time.sleep(1)
-                    placeholder.success("✅ Pronto per una nuova generazione!")
-                    
+                    placeholder.success("✅ Opera pronta!")
                     st.rerun() 
-                else:
-                    st.error("Il modello non ha restituito alcuna immagine. Riprova con un altro prompt.")
-                    
             except Exception as e:
-                st.error(f"Errore di connessione con l'API Google: {e}")
+                st.error("L'API è temporaneamente sovraccarica. Riprova tra un istante.")
     else:
         st.warning("Inserisci entrambi i campi.")
 
