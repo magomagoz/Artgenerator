@@ -87,7 +87,8 @@ except:
 # --- CAMPO PER INSERIMENTO API KEY NELLA SIDEBAR ---
 st.sidebar.header("🔑 Configurazione API")
 st.sidebar.markdown("Per generare le immagini, inserisci la tua chiave di Google AI Studio.")
-api_key_input = st.sidebar.text_input("API Key di Google", type="password")
+api_key_input = st.secrets.get("API_KEY", "")
+#api_key_input = st.sidebar.text_input("API Key di Google", type="password")
 
 # --- Inizializzazione Unica dello Stato della Sessione ---
 if 'immagine_fatta' not in st.session_state:
