@@ -87,8 +87,7 @@ except:
 # --- CAMPO PER INSERIMENTO API KEY NELLA SIDEBAR ---
 st.sidebar.header("🔑 Configurazione API")
 st.sidebar.markdown("Per generare le immagini, inserisci la tua chiave di Google AI Studio.")
-api_key_input = st.secrets.get("API_KEY", "")
-#api_key_input = st.sidebar.text_input("API Key di Google", type="password")
+api_key_input = st.sidebar.text_input("API Key di Google", type="password")
 
 # --- Inizializzazione Unica dello Stato della Sessione ---
 if 'immagine_fatta' not in st.session_state:
@@ -179,17 +178,17 @@ if st.session_state.immagine_fatta is not None:
             mime="image/jpeg"
         )
         
-    #with col_dl2:
+    with col_dl2:
         # Generazione e Bottone Download PDF
-        #pdf_data = crea_pdf_completo(
-            #st.session_state.pittore_fatto,
-            #st.session_state.soggetto_fatto,
-            #st.session_state.immagine_fatta
-        #)
+        pdf_data = crea_pdf_completo(
+            st.session_state.pittore_fatto,
+            st.session_state.soggetto_fatto,
+            st.session_state.immagine_fatta
+        )
         
-        #st.download_button(
-            #label="📄 Scarica Dossier PDF",
-            #data=pdf_data,
-            #file_name=f"Recensione_critica_di_{st.session_state.soggetto_fatto}_del_maestro_{st.session_state.pittore_fatto}.pdf",
-            #mime="application/pdf"
-        #)
+        st.download_button(
+            label="📄 Scarica Dossier PDF",
+            data=pdf_data,
+            file_name=f"Recensione_critica_di_{st.session_state.soggetto_fatto}_del_maestro_{st.session_state.pittore_fatto}.pdf",
+            mime="application/pdf"
+        )
