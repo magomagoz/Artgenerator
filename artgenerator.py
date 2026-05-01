@@ -134,7 +134,7 @@ if st.session_state.immagine_fatta:
         st.download_button(
             label="🖼️ Scarica Immagine (JPG)",
             data=st.session_state.immagine_fatta,
-            file_name=f"Opera_{st.session_state.soggetto_fatto}.jpg",
+            file_name=f"{st.session_state.pittore_fatto}_interpreta_{st.session_state.soggetto_fatto}.jpg",
             mime="image/jpeg"
         )
         
