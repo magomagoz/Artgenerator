@@ -126,7 +126,7 @@ if st.button("Genera Visione Artistica"):
                 
                 # --- CHIAMATA AL MODELLO IMAGEN 3 ---
                 response = client.models.generate_images(
-                    model='imagen-2.0',
+                    model='imagen-1.0',
                     prompt=prompt_artistico,
                     config=types.GenerateImagesConfig(
                         number_of_images=1,
