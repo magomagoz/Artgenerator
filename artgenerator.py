@@ -115,7 +115,7 @@ if st.button("Genera Visione Artistica"):
     if pittore and soggetto:
         st.session_state.immagine_fatta = None 
 
-        with st.spinner(f"Il maestro {pittore} sta dipingendo nei laboratori Google..."):
+        with st.spinner(f"Il maestro {pittore} sta dipingendo..."):
             prompt_artistico = (
                 f"A centered, symmetrical professional masterpiece depicting ONLY '{soggetto}' as the absolute main focus. "
                 f"The subject '{soggetto}' is placed in the dead center of the frame. "
@@ -131,7 +131,7 @@ if st.button("Genera Visione Artistica"):
                 
                 # --- CHIAMATA AL MODELLO IMAGEN 3 ---
                 response = client.models.generate_images(
-                    model='imagen-3.0-generate-001',
+                    model='imagen-2.0',
                     prompt=prompt_artistico,
                     config=types.GenerateImagesConfig(
                         number_of_images=1,
