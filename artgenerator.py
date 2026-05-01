@@ -126,18 +126,20 @@ if st.button("Genera Visione Artistica"):
             )
             
             try:
-                # Usa la chiave recuperata dai segreti
+                # Inizializza il client con la chiave dai Secrets
                 client = genai.Client(api_key=api_key_fissa)
                 
-                # --- CHIAMATA AL MODELLO IMAGEN 3 ---
+                # Usa 'imagen-3.0-generate-001' o 'imagen-3.0-fast-001'
+                # Imagen 2.0 è spesso deprecato o limitato ad account enterprise
                 response = client.models.generate_images(
-                    model='imagen-2.0',
+                    model='imagen-3.0-generate-001', 
                     prompt=prompt_artistico,
                     config=types.GenerateImagesConfig(
                         number_of_images=1,
                         output_mime_type="image/jpeg",
-                        aspect_ratio="4:3", # Formato perfetto per non venire tagliato nel PDF
-                        person_generation="ALLOW_ADULT" # Evita falsi positivi di censura su volti storici
+                        aspect_ratio="4:3",
+                        safety_filter_level="BLOCK_ONLY_HIGH", # Meno restrittivo per l'arte storica
+                        person_generation="ALLOW_ADULT"
                     )
                 )
                 
