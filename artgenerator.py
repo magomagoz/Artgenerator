@@ -132,7 +132,7 @@ if st.button("Genera Visione Artistica"):
                 # Usa 'imagen-3.0-generate-001' o 'imagen-3.0-fast-001'
                 # Imagen 2.0 è spesso deprecato o limitato ad account enterprise
                 response = client.models.generate_images(
-                    model='imagen-3.0-generate-001', 
+                    model='imagen-2.5', 
                     prompt=prompt_artistico,
                     config=types.GenerateImagesConfig(
                         number_of_images=1,
