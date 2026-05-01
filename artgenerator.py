@@ -85,10 +85,10 @@ except:
     st.warning("Banner non trovato. Assicurati che 'banner3.png' sia nella cartella del progetto.")
 
 # --- CAMPO PER INSERIMENTO API KEY NELLA SIDEBAR ---
-st.sidebar.header("🔑 Configurazione API")
-st.sidebar.markdown("Per generare le immagini, inserisci la tua chiave di Google AI Studio.")
+#st.sidebar.header("🔑 Configurazione API")
+#st.sidebar.markdown("Per generare le immagini, inserisci la tua chiave di Google AI Studio.")
 #api_key_input = st.sidebar.text_input("API Key di Google", type="password")
-genai.configure(api_key=st.secrets["API_KEY"])
+#genai.configure(api_key=st.secrets["API_KEY"])
 
 
 # --- Inizializzazione Unica dello Stato della Sessione ---
@@ -105,8 +105,11 @@ pittore = col1.text_input("🎨 Nome completo del Pittore (movimento artistico e
 soggetto = col2.text_input("Soggetto da dipingere")
 
 if st.button("Genera Visione Artistica"):
-    if not api_key_input:
-        st.error("⚠️ Inserisci la tua API Key di Google nella barra laterale a sinistra per poter dipingere!")
+    # Recuperiamo la chiave dai Secrets di Streamlit invece che dall'input
+    try:
+        api_key_fissa = st.secrets["API_KEY"]
+    except:
+        st.error("🔑 Chiave API non trovata nei Secrets di Streamlit!")
         st.stop()
         
     if pittore and soggetto:
@@ -123,8 +126,8 @@ if st.button("Genera Visione Artistica"):
             )
             
             try:
-                # --- INIZIALIZZAZIONE DEL CLIENT GOOGLE ---
-                client = genai.Client(api_key=api_key_input)
+                # Usa la chiave recuperata dai segreti
+                client = genai.Client(api_key=api_key_fissa)
                 
                 # --- CHIAMATA AL MODELLO IMAGEN 3 ---
                 response = client.models.generate_images(
