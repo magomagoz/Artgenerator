@@ -2,10 +2,11 @@ import streamlit as st
 import urllib.parse
 import requests
 import random
-from fpdf import FPDF  # CORRETTO: Sintassi di importazione esatta
+from fpdf import FPDF 
 import os
-import time # Aggiungi questo import in alto
-#from duckduckgo_search import DDGS
+import time 
+from google import genai          # NUOVO IMPORT
+from google.genai import types    # NUOVO IMPORT
 
 # --- Funzione PDF Avanzata (Adattata per sola Immagine/Titolo) ---
 class PDF(FPDF):
@@ -21,7 +22,6 @@ class PDF(FPDF):
         self.cell(0, 10, f'Pagina {self.page_no()}', 0, 0, 'C')
 
 def genera_analisi_ia(pittore, soggetto):
-    # Modifichiamo il prompt per chiedere esplicitamente di evitare linguaggi inventati
     prompt_testo = (
         f"Agisci come un critico d'arte. Scrivi una recensione tecnica di 400 parole in italiano "
         f"sull'opera '{soggetto}' realizzata da {pittore}. "
@@ -36,8 +36,6 @@ def genera_analisi_ia(pittore, soggetto):
         res = requests.get(url_testo, timeout=30)
         if res.status_code == 200:
             testo = res.text
-            # --- PULIZIA AUTOMATICA DEI CARATTERI "SPORCHI" ---
-            # Rimuoviamo gli spazi speciali e i caratteri che FPDF interpreta come ?
             testo = testo.replace('\xa0', ' ').replace('\u202f', ' ').replace('\u200b', '')
             testo = testo.replace('’', "'").replace('“', '"').replace('”', '"').replace('–', '-')
             return testo
@@ -49,7 +47,6 @@ def crea_pdf_completo(pittore, soggetto, immagine_bytes):
     pdf = PDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     
-    # --- PAGINA 1: ANALISI ---
     pdf.add_page()
     pdf.set_font("Arial", 'B', 16)
     pdf.cell(0, 10, f"Dossier: {soggetto.capitalize()} del maestro {pittore}", 0, 1, 'L')
@@ -57,34 +54,23 @@ def crea_pdf_completo(pittore, soggetto, immagine_bytes):
     pdf.cell(0, 10, f"Stile: {pittore}", 0, 1, 'L')
     pdf.ln(10)
 
-
-    
-    # Recupero analisi dall'IA
     with st.spinner("Il critico d'arte sta scrivendo..."):
         testo_analisi = genera_analisi_ia(pittore, soggetto)
     
-    # Rimuoviamo eventuali tag residui o codici IA
     import re
-    testo_pulito = re.sub(r'<[^>]+>', '', testo_analisi) # Rimuove qualsiasi cosa tra < >
+    testo_pulito = re.sub(r'<[^>]+>', '', testo_analisi) 
     
-    # Forziamo la conversione in stringa pulita per FPDF
-    testo_per_pdf = testo_pulito.encode('ascii', 'ignore').decode('ascii') 
-    # Nota: 'ascii ignore' è drastico ma elimina ogni punto interrogativo. 
-    # Se vuoi tenere gli accenti, usa la riga sotto:
     testo_per_pdf = testo_pulito.encode('latin-1', 'replace').decode('latin-1').replace('?', '')
         
     pdf.set_font("Arial", size=11)
-    pdf.multi_cell(0, 8, txt=testo_pulito)
+    pdf.multi_cell(0, 8, txt=testo_per_pdf)
 
-    # --- PAGINA 2: IMMAGINE (Centrata e non tagliata) ---
     if immagine_bytes:
         pdf.add_page(orientation='L') 
         temp_img = f"temp_{random.randint(1,999)}.jpg"
         with open(temp_img, "wb") as f:
             f.write(immagine_bytes)
         
-        # Parametri ottimizzati: x=25, y=20, larghezza=245 (su 297mm totali)
-        # Questo garantisce che non venga mai tagliata la parte inferiore
         pdf.image(temp_img, x=25, y=20, w=245) 
         os.remove(temp_img)
     
@@ -93,11 +79,15 @@ def crea_pdf_completo(pittore, soggetto, immagine_bytes):
 # --- Configurazione Base ---
 st.set_page_config(page_title="Il Pennello del Tempo", page_icon="🎨", layout="wide")
 
-# Assicurati di avere l'immagine "banner3.png" nella stessa cartella!
 try:
     st.image("banner3.png")
 except:
     st.warning("Banner non trovato. Assicurati che 'banner3.png' sia nella cartella del progetto.")
+
+# --- CAMPO PER INSERIMENTO API KEY NELLA SIDEBAR ---
+st.sidebar.header("🔑 Configurazione API")
+st.sidebar.markdown("Per generare le immagini, inserisci la tua chiave di Google AI Studio.")
+api_key_input = st.sidebar.text_input("API Key di Google", type="password")
 
 # --- Inizializzazione Unica dello Stato della Sessione ---
 if 'immagine_fatta' not in st.session_state:
@@ -113,10 +103,14 @@ pittore = col1.text_input("🎨 Nome completo del Pittore (movimento artistico e
 soggetto = col2.text_input("Soggetto da dipingere")
 
 if st.button("Genera Visione Artistica"):
+    if not api_key_input:
+        st.error("⚠️ Inserisci la tua API Key di Google nella barra laterale a sinistra per poter dipingere!")
+        st.stop()
+        
     if pittore and soggetto:
         st.session_state.immagine_fatta = None 
 
-        with st.spinner(f"Il maestro {pittore} sta dipingendo..."):
+        with st.spinner(f"Il maestro {pittore} sta dipingendo nei laboratori Google..."):
             prompt_artistico = (
                 f"A centered, symmetrical professional masterpiece depicting ONLY '{soggetto}' as the absolute main focus. "
                 f"The subject '{soggetto}' is placed in the dead center of the frame. "
@@ -126,16 +120,27 @@ if st.button("Genera Visione Artistica"):
                 f"Museum quality, 8k resolution, perfectly composed, focused on '{soggetto}'."
             )
             
-            prompt_encoded = urllib.parse.quote(prompt_artistico)
-            seed = random.randint(1, 999999)
-            
-            image_url = f"https://image.pollinations.ai/prompt/{prompt_encoded}?width=1024&height=768&nologo=true&seed={seed}"
-            
             try:
-                response = requests.get(image_url, timeout=45) 
+                # --- INIZIALIZZAZIONE DEL CLIENT GOOGLE ---
+                client = genai.Client(api_key=api_key_input)
                 
-                if response.status_code == 200:
-                    st.session_state.immagine_fatta = response.content
+                # --- CHIAMATA AL MODELLO IMAGEN 3 ---
+                response = client.models.generate_images(
+                    model='imagen-3.0-generate-001',
+                    prompt=prompt_artistico,
+                    config=types.GenerateImagesConfig(
+                        number_of_images=1,
+                        output_mime_type="image/jpeg",
+                        aspect_ratio="4:3", # Formato perfetto per non venire tagliato nel PDF
+                        person_generation="ALLOW_ADULT" # Evita falsi positivi di censura su volti storici
+                    )
+                )
+                
+                # Estrazione dei Bytes dell'immagine
+                if response.generated_images:
+                    image_bytes = response.generated_images[0].image.image_bytes
+                    
+                    st.session_state.immagine_fatta = image_bytes
                     st.session_state.pittore_fatto = pittore
                     st.session_state.soggetto_fatto = soggetto
                     
@@ -147,8 +152,11 @@ if st.button("Genera Visione Artistica"):
                     placeholder.success("✅ Pronto per una nuova generazione!")
                     
                     st.rerun() 
+                else:
+                    st.error("Il modello non ha restituito alcuna immagine. Riprova con un altro prompt.")
+                    
             except Exception as e:
-                st.error("Errore di connessione: L'API ci ha messo troppo tempo a rispondere.")
+                st.error(f"Errore di connessione con l'API Google: {e}")
     else:
         st.warning("Inserisci entrambi i campi.")
 
@@ -160,15 +168,13 @@ if st.session_state.immagine_fatta is not None:
     
     st.success("Opera completata!")
     
-    # Creiamo due colonne per affiancare i bottoni di download
     col_dl1, col_dl2 = st.columns(2)
     
     with col_dl1:
-        # Bottone Download Immagine JPEG
         st.download_button(
             label="🖼️ Scarica solo l'Immagine (JPG)",
             data=st.session_state.immagine_fatta,
-            file_name=f"Soggetto:_{st.session_state.soggetto_fatto}_realizzato_dal_maestro_{st.session_state.pittore_fatto}.jpg",
+            file_name=f"Soggetto_{st.session_state.soggetto_fatto}_dal_maestro_{st.session_state.pittore_fatto}.jpg",
             mime="image/jpeg"
         )
         
