@@ -85,9 +85,9 @@ except:
     st.warning("Banner non trovato. Assicurati che 'banner3.png' sia nella cartella del progetto.")
 
 # --- CAMPO PER INSERIMENTO API KEY NELLA SIDEBAR ---
-st.sidebar.header("🔑 Configurazione API")
-st.sidebar.markdown("Per generare le immagini, inserisci la tua chiave di Google AI Studio.")
-api_key_input = st.sidebar.text_input("API Key di Google", type="password")
+#st.sidebar.header("🔑 Configurazione API")
+#st.sidebar.markdown("Per generare le immagini, inserisci la tua chiave di Google AI Studio.")
+#api_key_input = st.sidebar.text_input("API Key di Google", type="password")
 
 # --- Inizializzazione Unica dello Stato della Sessione ---
 if 'immagine_fatta' not in st.session_state:
@@ -99,7 +99,7 @@ if 'soggetto_fatto' not in st.session_state:
 
 # --- Input Utente ---
 col1, col2 = st.columns(2)
-pittore = col1.text_input("🎨 Nome completo del Pittore (movimento artistico e/o tecnica specifica)")
+pittore = col1.text_input("🎨 Pittore (movimento artistico e/o tecnica specifica)")
 soggetto = col2.text_input("Soggetto da dipingere")
 
 if st.button("Genera Visione Artistica"):
