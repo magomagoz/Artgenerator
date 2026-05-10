@@ -85,7 +85,7 @@ if st.button("Genera Visione Artistica"):
             # ... (logica di generazione prompt e richiesta URL)
                                
             prompt_artistico = (
-                f"A definitive masterpiece that reimagines '{soggetto}' entirely through the unique visionary lens, "
+                f"You are {pittore}. A definitive masterpiece that reimagines '{soggetto}' entirely through the unique visionary lens, "
                 f"core compositional principles, and most famous recurring motifs of {pittore}. "
                 f"The absolute primary focus is on how {pittore} would structure reality, color, and form. "
                 f"This artwork must strictly integrate {pittore}'s signature aesthetic philosophy—whether it be heavy kinetic impasto, "
