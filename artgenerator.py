@@ -140,23 +140,23 @@ if st.session_state.immagine_fatta is not None:
     with col_dl1:
         # Bottone Download Immagine JPEG
         st.download_button(
-            label="🖼️ Scarica solo l'Immagine (JPG)",
+            label="🖼️ Download Image (JPG)",
             data=st.session_state.immagine_fatta,
             file_name=f"{st.session_state.soggetto_fatto}_{st.session_state.pittore_fatto}.jpg",
             mime="image/jpeg"
         )
         
-    with col_dl2:
+    #with col_dl2:
         # Generazione e Bottone Download PDF
-        pdf_data = crea_pdf_completo(
-            st.session_state.pittore_fatto,
-            st.session_state.soggetto_fatto,
-            st.session_state.immagine_fatta
-        )
+        #pdf_data = crea_pdf_completo(
+            #st.session_state.pittore_fatto,
+            #st.session_state.soggetto_fatto,
+            #st.session_state.immagine_fatta
+        #)
         
-        st.download_button(
-            label="📄 Scarica Dossier PDF",
-            data=pdf_data,
-            file_name=f"Dossier_{st.session_state.pittore_fatto}.pdf",
-            mime="application/pdf"
-        )
+        #st.download_button(
+            #label="📄 Scarica Dossier PDF",
+            #data=pdf_data,
+            #file_name=f"Dossier_{st.session_state.pittore_fatto}.pdf",
+            #mime="application/pdf"
+        #)
