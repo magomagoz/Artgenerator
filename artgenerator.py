@@ -85,15 +85,20 @@ if st.button("Genera Visione Artistica"):
             # ... (logica di generazione prompt e richiesta URL)
                                
             prompt_artistico = (
-                f"You are {pittore}. A definitive masterpiece that reimagines '{soggetto}' entirely through the unique visionary lens, "
-                f"core compositional principles, and most famous recurring motifs of {pittore}. "
-                f"The absolute primary focus is on how {pittore} would structure reality, color, and form. "
-                f"This artwork must strictly integrate {pittore}'s signature aesthetic philosophy—whether it be heavy kinetic impasto, "
-                f"delicate luminous glazes, abstract geometric fragmentation, or flat patterned linework—"
-                f"applying it directly to '{soggetto}'. It must feel like an authentic discovery from {pittore}'s main body of work. "
-                f"Highest quality detailed textures, oil on canvas (or applicable media), 8k resolution."
-            )
+                f"An entirely original masterpiece depicting '{soggetto}', "
+                f"imagined and executed in the unmistakable artistic style of {pittore}. "
             
+                f"The artwork must faithfully reproduce {pittore}'s signature visual language, "
+                f"including characteristic brushwork, color palette, lighting, textures, "
+                f"composition, perspective, emotional atmosphere, recurring motifs, and artistic philosophy. "
+            
+                f"The subject '{soggetto}' must be completely transformed through the artistic vision of {pittore}, "
+                f"as though it were a genuine lost work from the painter’s most iconic creative period. "
+            
+                f"Authentic fine art aesthetic, museum-quality composition, expressive painterly detail, "
+                f"masterful texture rendering, highly cohesive visual storytelling, "
+                f"ultra detailed, cinematic lighting, 8k, masterpiece."
+            )            
             prompt_encoded = urllib.parse.quote(prompt_artistico)
             seed = random.randint(1, 999999)
             
