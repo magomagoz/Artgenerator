@@ -2,11 +2,12 @@ import streamlit as st
 import urllib.parse
 import requests
 import random
-from fpdf import FPDF  # CORRETTO: Sintassi di importazione esatta
+from fpdf import FPDF 
 import os
 import time
+import re # Necessario per pulire il testo dai tag HTML/Markdown
 
-# --- Funzione PDF Avanzata (Adattata per sola Immagine/Titolo) ---
+# --- Funzione PDF Avanzata (Adattata per Immagine/Titolo) ---
 class PDF(FPDF):
     def header(self):
         if self.page_no() == 1:
@@ -18,6 +19,30 @@ class PDF(FPDF):
         self.set_y(-15)
         self.set_font('Arial', 'I', 8)
         self.cell(0, 10, f'Pagina {self.page_no()}', 0, 0, 'C')
+
+# --- Funzione di Analisi Critica (IA Testuale) ---
+def genera_analisi_ia(pittore, soggetto):
+    prompt_testo = (
+        f"Agisci come un critico d'arte esperto. Scrivi una recensione tecnica di 400 parole in italiano "
+        f"sull'opera '{soggetto}' realizzata da {pittore}. "
+        f"IMPORTANTE: L'opera rappresenta solo ed esclusivamente '{soggetto}'. "
+        f"Non menzionare ballerine, fiori o altri soggetti tipici se non sono il soggetto richiesto. "
+        f"Analizza pennellate, luce e filosofia di {pittore} applicate a questo specifico lavoro."
+    )
+    
+    url_testo = f"https://text.pollinations.ai/{urllib.parse.quote(prompt_testo)}?model=openai"
+    
+    try:
+        res = requests.get(url_testo, timeout=30)
+        if res.status_code == 200:
+            testo = res.text
+            # Pulizia caratteri speciali per evitare crash FPDF
+            testo = testo.replace('\xa0', ' ').replace('\u202f', ' ').replace('\u200b', '')
+            testo = testo.replace('’', "'").replace('“', '"').replace('”', '"').replace('–', '-')
+            return testo
+    except Exception:
+        pass
+    return f"Analisi critica dell'opera '{soggetto}' nello stile inconfondibile di {pittore}."
 
 def crea_pdf_completo(pittore, soggetto, immagine_bytes):
     pdf = PDF()
@@ -31,11 +56,15 @@ def crea_pdf_completo(pittore, soggetto, immagine_bytes):
     pdf.cell(0, 10, f"Nello stile di {pittore}", 0, 1, 'L')
     pdf.ln(10)
     
-    # Testo del Critico d'Arte
+    # Generazione Testo del Critico d'Arte tramite IA
+    testo_analisi = genera_analisi_ia(pittore, soggetto)
+    
+    # Pulizia definitiva per FPDF (rimozione tag e conversione codifica in latin-1)
+    testo_pulito = re.sub(r'<[^>]+>', '', testo_analisi) 
+    testo_per_pdf = testo_pulito.encode('latin-1', 'replace').decode('latin-1').replace('?', '')
+    
     pdf.set_font("Arial", size=11)
-    prompt_critico = f"Sei un critico d'arte esperto di {pittore}. Analizza questa immagine nello stile tecnico e compositivo di {pittore}."    
-
-    pdf.multi_cell(0, 8, txt=prompt_critico)
+    pdf.multi_cell(0, 8, txt=testo_per_pdf)
 
     # --- PAGINA 2: L'OPERA (Senza ritagli) ---
     if immagine_bytes:
@@ -45,7 +74,6 @@ def crea_pdf_completo(pittore, soggetto, immagine_bytes):
             f.write(immagine_bytes)
         
         # 'w=260' assicura che rimanga un margine e l'immagine non venga tagliata sotto
-        # Le coordinate x=15 e y=20 centrano l'immagine nella pagina A4 orizzontale
         pdf.image(temp_img_path, x=15, y=20, w=260) 
         
         try:
@@ -58,7 +86,6 @@ def crea_pdf_completo(pittore, soggetto, immagine_bytes):
 # --- Configurazione Base ---
 st.set_page_config(page_title="Il Pennello del Tempo", page_icon="🎨", layout="wide")
 
-# Assicurati di avere l'immagine "banner3.png" nella stessa cartella!
 try:
     st.image("banner3.png")
 except:
@@ -91,7 +118,7 @@ if st.button("Genera Visione Artistica"):
     if pittore and soggetto:
         st.session_state.immagine_fatta = None 
 
-        with st.spinner(f"Il maestro {pittore} sta dipingendo..."):
+        with st.spinner(f"Il maestro {pittore} sta dipingendo e scrivendo l'analisi..."):
                                
             prompt_artistico = (
                 f"An entirely original masterpiece depicting '{soggetto}', "
@@ -111,7 +138,7 @@ if st.button("Genera Visione Artistica"):
             prompt_encoded = urllib.parse.quote(prompt_artistico)
             seed = random.randint(1, 999999)
             
-            # --- NUOVO ENDPOINT CON API KEY ---
+            # --- ENDPOINT POLLINATIONS CON API KEY ---
             image_url = f"https://gen.pollinations.ai/image/{prompt_encoded}?width=1024&height=768&nologo=true&seed={seed}&key={api_key}"
             
             try:
@@ -159,7 +186,7 @@ if st.session_state.immagine_fatta is not None:
         )
         
     with col_dl2:
-        # Generazione e Bottone Download PDF
+        # Generazione e Bottone Download PDF con testo IA reintegrato
         pdf_data = crea_pdf_completo(
             st.session_state.pittore_fatto,
             st.session_state.soggetto_fatto,
