@@ -92,8 +92,8 @@ except:
     st.warning("Banner non trovato. Assicurati che 'banner3.png' sia nella cartella del progetto.")
 
 # --- SIDEBAR PER API KEY ---
-st.sidebar.header("🔑 Configurazione API")
-st.sidebar.markdown("Pollinations ora richiede una chiave gratuita. Ottienila su [enter.pollinations.ai](https://enter.pollinations.ai).")
+#st.sidebar.header("🔑 Configurazione API")
+#st.sidebar.markdown("Pollinations ora richiede una chiave gratuita. Ottienila su [enter.pollinations.ai](https://enter.pollinations.ai).")
 # Prova a leggere automaticamente la chiave dai Secrets di Streamlit per massima sicurezza
 #api_key = st.sidebar.text_input("API Key di Pollinations", type="password", value=st.secrets.get("STABILITY_API_KEY", ""))
 api_key = st.secrets.get("STABILITY_API_KEY", "")
