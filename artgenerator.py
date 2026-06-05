@@ -4,7 +4,7 @@ import requests
 import random
 from fpdf import FPDF  # CORRETTO: Sintassi di importazione esatta
 import os
-import time # Aggiungi questo import in alto
+import time
 
 # --- Funzione PDF Avanzata (Adattata per sola Immagine/Titolo) ---
 class PDF(FPDF):
@@ -64,6 +64,12 @@ try:
 except:
     st.warning("Banner non trovato. Assicurati che 'banner3.png' sia nella cartella del progetto.")
 
+# --- SIDEBAR PER API KEY ---
+st.sidebar.header("🔑 Configurazione API")
+st.sidebar.markdown("Pollinations ora richiede una chiave gratuita. Ottienila su [enter.pollinations.ai](https://enter.pollinations.ai).")
+# Prova a leggere automaticamente la chiave dai Secrets di Streamlit per massima sicurezza
+api_key = st.sidebar.text_input("API Key di Pollinations", type="password", value=st.secrets.get("POLLI_KEY", ""))
+
 # --- Inizializzazione Unica dello Stato della Sessione ---
 if 'immagine_fatta' not in st.session_state:
     st.session_state.immagine_fatta = None
@@ -78,11 +84,14 @@ pittore = col1.text_input("🎨 Nome completo del Pittore (movimento artistico e
 soggetto = col2.text_input("Soggetto da dipingere")
 
 if st.button("Genera Visione Artistica"):
+    if not api_key:
+        st.error("⚠️ Inserisci la tua API Key di Pollinations nella barra laterale per poter dipingere!")
+        st.stop()
+
     if pittore and soggetto:
         st.session_state.immagine_fatta = None 
 
         with st.spinner(f"Il maestro {pittore} sta dipingendo..."):
-            # ... (logica di generazione prompt e richiesta URL)
                                
             prompt_artistico = (
                 f"An entirely original masterpiece depicting '{soggetto}', "
@@ -102,7 +111,8 @@ if st.button("Genera Visione Artistica"):
             prompt_encoded = urllib.parse.quote(prompt_artistico)
             seed = random.randint(1, 999999)
             
-            image_url = f"https://image.pollinations.ai/prompt/{prompt_encoded}?width=1024&height=768&nologo=true&seed={seed}"
+            # --- NUOVO ENDPOINT CON API KEY ---
+            image_url = f"https://gen.pollinations.ai/image/{prompt_encoded}?width=1024&height=768&nologo=true&seed={seed}&key={api_key}"
             
             try:
                 response = requests.get(image_url, timeout=45) 
@@ -120,6 +130,8 @@ if st.button("Genera Visione Artistica"):
                     placeholder.success("✅ Pronto per una nuova generazione!")
                     
                     st.rerun() 
+                else:
+                    st.error(f"Errore restituito dal server Pollinations (Codice: {response.status_code}). Verifica l'API Key.")
             except Exception as e:
                 st.error("Errore di connessione: L'API ci ha messo troppo tempo a rispondere.")
     else:
@@ -146,17 +158,17 @@ if st.session_state.immagine_fatta is not None:
             mime="image/jpeg"
         )
         
-    #with col_dl2:
+    with col_dl2:
         # Generazione e Bottone Download PDF
-        #pdf_data = crea_pdf_completo(
-            #st.session_state.pittore_fatto,
-            #st.session_state.soggetto_fatto,
-            #st.session_state.immagine_fatta
-        #)
+        pdf_data = crea_pdf_completo(
+            st.session_state.pittore_fatto,
+            st.session_state.soggetto_fatto,
+            st.session_state.immagine_fatta
+        )
         
-        #st.download_button(
-            #label="📄 Scarica Dossier PDF",
-            #data=pdf_data,
-            #file_name=f"Dossier_{st.session_state.pittore_fatto}.pdf",
-            #mime="application/pdf"
-        #)
+        st.download_button(
+            label="📄 Scarica Dossier PDF",
+            data=pdf_data,
+            file_name=f"Dossier_{st.session_state.pittore_fatto}.pdf",
+            mime="application/pdf"
+        )
