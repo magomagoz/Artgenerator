@@ -95,7 +95,12 @@ except:
 st.sidebar.header("🔑 Configurazione API")
 st.sidebar.markdown("Pollinations ora richiede una chiave gratuita. Ottienila su [enter.pollinations.ai](https://enter.pollinations.ai).")
 # Prova a leggere automaticamente la chiave dai Secrets di Streamlit per massima sicurezza
-api_key = st.sidebar.text_input("API Key di Pollinations", type="password", value=st.secrets.get("STABILITY_KEY", ""))
+#api_key = st.sidebar.text_input("API Key di Pollinations", type="password", value=st.secrets.get("STABILITY_API_KEY", ""))
+api_key = st.secrets.get("STABILITY_API_KEY", "")
+
+if not api_key:
+    st.error("⚠️ Errore: STABILITY_API_KEY non trovata nei Secrets di Streamlit! Configurala nella dashboard di Streamlit Cloud o nel file locale `.streamlit/secrets.toml`.")
+    st.stop()
 
 # --- Inizializzazione Unica dello Stato della Sessione ---
 if 'immagine_fatta' not in st.session_state:
