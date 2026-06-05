@@ -21,16 +21,20 @@ class PDF(FPDF):
         self.cell(0, 10, f'Pagina {self.page_no()}', 0, 0, 'C')
 
 # --- Funzione di Analisi Critica (IA Testuale) ---
-def genera_analisi_ia(pittore, soggetto):
+# --- Funzione di Analisi Critica (IA Testuale) AGGIORNATA ---
+def genera_analisi_ia(pittore, soggetto, api_key):
     prompt_testo = (
-        f"Agisci come un critico d'arte esperto. Scrivi una recensione tecnica di 400 parole in italiano "
-        f"sull'opera '{soggetto}' realizzata da {pittore}. "
-        f"IMPORTANTE: L'opera rappresenta solo ed esclusivamente '{soggetto}'. "
-        f"Non menzionare ballerine, fiori o altri soggetti tipici se non sono il soggetto richiesto. "
-        f"Analizza pennellate, luce e filosofia di {pittore} applicate a questo specifico lavoro."
+        f"Agisci come un critico d'arte accademico e professionale. "
+        f"Scrivi una recensione tecnica e sensata di circa 250 parole in italiano "
+        f"sull'opera '{soggetto}' immaginata nello stile di {pittore}. "
+        f"REGOLE FONDAMENTALI: "
+        f"1. Usa un vocabolario artistico reale e corretto (composizione, luce, pennellate, cromatismo). "
+        f"2. NON inventare neologismi, NON usare parole inesistenti o senza senso. "
+        f"3. Non divagare con concetti filosofici astrusi. Mantieni il testo ancorato alla descrizione visiva."
     )
     
-    url_testo = f"https://text.pollinations.ai/{urllib.parse.quote(prompt_testo)}?model=openai"
+    # Aggiungiamo la chiave API anche per il testo
+    url_testo = f"https://text.pollinations.ai/{urllib.parse.quote(prompt_testo)}?model=openai&key={api_key}"
     
     try:
         res = requests.get(url_testo, timeout=30)
@@ -40,11 +44,13 @@ def genera_analisi_ia(pittore, soggetto):
             testo = testo.replace('\xa0', ' ').replace('\u202f', ' ').replace('\u200b', '')
             testo = testo.replace('’', "'").replace('“', '"').replace('”', '"').replace('–', '-')
             return testo
-    except Exception:
-        pass
-    return f"Analisi critica dell'opera '{soggetto}' nello stile inconfondibile di {pittore}."
+        else:
+            # Se fallisce, restituiamo l'errore reale nel PDF per poter fare debug
+            return f"Errore del server durante la generazione del testo (Codice HTTP {res.status_code}). Verifica la connessione o l'API Key."
+    except Exception as e:
+        return f"Errore di connessione API Testuale: {e}"
 
-def crea_pdf_completo(pittore, soggetto, immagine_bytes):
+def crea_pdf_completo(pittore, soggetto, immagine_bytes, api_key):
     pdf = PDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     
@@ -56,24 +62,24 @@ def crea_pdf_completo(pittore, soggetto, immagine_bytes):
     pdf.cell(0, 10, f"Nello stile di {pittore}", 0, 1, 'L')
     pdf.ln(10)
     
-    # Generazione Testo del Critico d'Arte tramite IA
-    testo_analisi = genera_analisi_ia(pittore, soggetto)
+    # Passiamo la api_key alla funzione del testo
+    testo_analisi = genera_analisi_ia(pittore, soggetto, api_key)
     
-    # Pulizia definitiva per FPDF (rimozione tag e conversione codifica in latin-1)
+    # Pulizia definitiva per FPDF
+    import re
     testo_pulito = re.sub(r'<[^>]+>', '', testo_analisi) 
     testo_per_pdf = testo_pulito.encode('latin-1', 'replace').decode('latin-1').replace('?', '')
     
     pdf.set_font("Arial", size=11)
     pdf.multi_cell(0, 8, txt=testo_per_pdf)
 
-    # --- PAGINA 2: L'OPERA (Senza ritagli) ---
+    # --- PAGINA 2: L'OPERA ---
     if immagine_bytes:
-        pdf.add_page(orientation='L') # Pagina orizzontale per rispettare le proporzioni 1024x768
+        pdf.add_page(orientation='L') 
         temp_img_path = "temp_pdf_image.jpg"
         with open(temp_img_path, "wb") as f:
             f.write(immagine_bytes)
         
-        # 'w=260' assicura che rimanga un margine e l'immagine non venga tagliata sotto
         pdf.image(temp_img_path, x=15, y=20, w=260) 
         
         try:
@@ -191,11 +197,12 @@ if st.session_state.immagine_fatta is not None:
         )
         
     with col_dl2:
-        # Generazione e Bottone Download PDF con testo IA reintegrato
+        # Passiamo api_key come quarto argomento
         pdf_data = crea_pdf_completo(
             st.session_state.pittore_fatto,
             st.session_state.soggetto_fatto,
-            st.session_state.immagine_fatta
+            st.session_state.immagine_fatta,
+            api_key
         )
         
         st.download_button(
