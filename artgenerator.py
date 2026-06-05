@@ -7,10 +7,10 @@ import os
 import time
 import re # Necessario per pulire il testo dai tag HTML/Markdown
 
-# Prova a leggere automaticamente la chiave dai Secrets di Streamlit
+# Recupero unico dell'API Key dai Secrets
 api_key = st.secrets.get("STABILITY_API_KEY", "")
 
-# --- Funzione PDF Avanzata ---
+# --- Funzione PDF Avanzata (Adattata per Immagine/Titolo) ---
 class PDF(FPDF):
     def header(self):
         if self.page_no() == 1:
@@ -23,7 +23,7 @@ class PDF(FPDF):
         self.set_font('Arial', 'I', 8)
         self.cell(0, 10, f'Pagina {self.page_no()}', 0, 0, 'C')
 
-# --- Funzione di Analisi Critica (IA Testuale) CORRETTA ---
+# --- Funzione di Analisi Critica (IA Testuale tramite POST) ---
 def genera_analisi_ia(pittore, soggetto, api_key):
     prompt_testo = (
         f"Agisci come un critico d'arte accademico e professionale. "
@@ -35,16 +35,23 @@ def genera_analisi_ia(pittore, soggetto, api_key):
         f"3. Non divagare con concetti filosofici astrusi. Mantieni il testo ancorato alla descrizione visiva."
     )
     
-    # Rimosso '?key=' dall'URL per il testo
-    url_testo = f"https://text.pollinations.ai/{urllib.parse.quote(prompt_testo)}?model=openai"
+    # Endpoint ufficiale per richieste strutturate
+    url_testo = "https://text.pollinations.ai/"
     
-    # La chiave per la parte testuale va passata come Bearer Token negli Headers
+    payload = {
+        "messages": [
+            {"role": "user", "content": prompt_testo}
+        ],
+        "model": "openai"
+    }
+    
     headers = {
-        "Authorization": f"Bearer {api_key}"
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
     }
     
     try:
-        res = requests.get(url_testo, headers=headers, timeout=30)
+        res = requests.post(url_testo, json=payload, headers=headers, timeout=30)
         if res.status_code == 200:
             testo = res.text
             # Pulizia caratteri speciali per evitare crash FPDF
@@ -52,11 +59,12 @@ def genera_analisi_ia(pittore, soggetto, api_key):
             testo = testo.replace('’', "'").replace('“', '"').replace('”', '"').replace('–', '-')
             return testo
         else:
-            return f"Errore del server testuale (Codice HTTP {res.status_code}). Verifica la chiave nei Secrets."
+            return f"Errore del server durante la generazione del testo (Codice HTTP {res.status_code})."
     except Exception as e:
         return f"Errore di connessione API Testuale: {e}"
 
-def crea_pdf_completo(pittore, soggetto, immagine_bytes, api_key):
+# --- Creazione del PDF utilizzando il testo già salvato in memoria ---
+def crea_pdf_completo(pittore, soggetto, immagine_bytes, testo_analisi):
     pdf = PDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     
@@ -67,8 +75,6 @@ def crea_pdf_completo(pittore, soggetto, immagine_bytes, api_key):
     pdf.set_font("Arial", 'I', 14)
     pdf.cell(0, 10, f"Nello stile di {pittore}", 0, 1, 'L')
     pdf.ln(10)
-    
-    testo_analisi = genera_analisi_ia(pittore, soggetto, api_key)
     
     # Pulizia definitiva per FPDF
     testo_pulito = re.sub(r'<[^>]+>', '', testo_analisi) 
@@ -101,18 +107,20 @@ try:
 except:
     st.warning("Banner non trovato. Assicurati che 'banner3.png' sia nella cartella del progetto.")
 
-# Blocco di sicurezza globale per i Secrets
+# Controllo bloccante per la chiave API
 if not api_key:
     st.error("⚠️ Errore: STABILITY_API_KEY non trovata nei Secrets di Streamlit! Configurala nella dashboard di Streamlit Cloud o nel file locale `.streamlit/secrets.toml`.")
     st.stop()
 
-# --- Inizializzazione dello Stato della Sessione ---
+# --- Inizializzazione Unica dello Stato della Sessione ---
 if 'immagine_fatta' not in st.session_state:
     st.session_state.immagine_fatta = None
 if 'pittore_fatto' not in st.session_state:
     st.session_state.pittore_fatto = ""
 if 'soggetto_fatto' not in st.session_state:
     st.session_state.soggetto_fatto = ""
+if 'testo_fatto' not in st.session_state:
+    st.session_state.testo_fatto = ""
 
 # --- Input Utente ---
 col1, col2 = st.columns(2)
@@ -122,6 +130,7 @@ soggetto = col2.text_input("Soggetto da dipingere")
 if st.button("Genera Visione Artistica"):
     if pittore and soggetto:
         st.session_state.immagine_fatta = None 
+        st.session_state.testo_fatto = ""
 
         with st.spinner(f"Il maestro {pittore} sta dipingendo e scrivendo l'analisi..."):
                                
@@ -140,16 +149,21 @@ if st.button("Genera Visione Artistica"):
             prompt_encoded = urllib.parse.quote(prompt_artistico)
             seed = random.randint(1, 999999)
             
-            # Endpoint Immagine (qui il parametro ?key= funziona regolarmente)
             image_url = f"https://gen.pollinations.ai/image/{prompt_encoded}?width=1024&height=768&nologo=true&seed={seed}&key={api_key}"
             
             try:
+                # 1. Chiamata per l'immagine
                 response = requests.get(image_url, timeout=45) 
                 
                 if response.status_code == 200:
+                    # 2. Chiamata controllata SINGOLA per il testo critico (eseguita solo se l'immagine è OK)
+                    testo_critico = genera_analisi_ia(pittore, soggetto, api_key)
+                    
+                    # Salva tutto nello stato contemporaneamente
                     st.session_state.immagine_fatta = response.content
                     st.session_state.pittore_fatto = pittore
                     st.session_state.soggetto_fatto = soggetto
+                    st.session_state.testo_fatto = testo_critico
                     
                     # --- LOGICA DEL TIMER ---
                     placeholder = st.empty()
@@ -160,11 +174,12 @@ if st.button("Genera Visione Artistica"):
                     
                     st.rerun() 
                 else:
-                    st.error(f"Errore restituito dal server Pollinations (Codice: {response.status_code}). Verifica l'API Key.")
+                    st.error(f"Errore restituito dal server Pollinations Immagine (Codice: {response.status_code}). Verifica l'API Key.")
             except Exception as e:
-                st.error(f"Errore di connessione: {e}")
+                st.error(f"Errore di connessione: L'API ci ha messo troppo tempo a rispondere. {e}")
     else:
         st.warning("Inserisci entrambi i campi.")
+
 
 # --- MOSTRA L'IMMAGINE E I PULSANTI DOWNLOAD ---
 if st.session_state.immagine_fatta is not None:
@@ -185,11 +200,12 @@ if st.session_state.immagine_fatta is not None:
         )
         
     with col_dl2:
+        # Ora passiamo direttamente st.session_state.testo_fatto, istantaneo e senza nuove chiamate API
         pdf_data = crea_pdf_completo(
             st.session_state.pittore_fatto,
             st.session_state.soggetto_fatto,
             st.session_state.immagine_fatta,
-            api_key
+            st.session_state.testo_fatto
         )
         
         st.download_button(
