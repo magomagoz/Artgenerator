@@ -134,14 +134,19 @@ if st.button("Genera Visione Artistica"):
 
         with st.spinner(f"Il maestro {pittore} sta dipingendo..."):
                                
-            prompt_artistico = (
-                f"An authentic painting of '{soggetto}', executed in the unmistakable artistic style of {pittore}. "
-                f"Faithful reproduction of {pittore}'s signature visual language, characteristic brushwork, "
-                f"distinctive color palette, specific lighting, and emotional atmosphere. "
-                f"A long-lost masterpiece from the painter's iconic creative period. "
-                f"Fine art aesthetic, rich oil on canvas texture, masterful composition, museum quality."
-            )
-            
+        prompt_artistico = (
+                f"An entirely original masterpiece depicting '{soggetto}', "
+                f"imagined and executed in the unmistakable artistic style of {pittore}. "
+                f"The artwork must faithfully reproduce {pittore}'s signature visual language, "
+                f"including characteristic brushwork, color palette, lighting, textures, "
+                f"composition, perspective, emotional atmosphere, recurring motifs, and artistic philosophy. "
+                f"The subject '{soggetto}' must be completely transformed through the artistic vision of {pittore}, "
+                f"as though it were a genuine lost work from the painter’s most iconic creative period. "
+                f"Authentic fine art aesthetic, museum-quality composition, expressive painterly detail, "
+                f"masterful texture rendering, highly cohesive visual storytelling, "
+                f"ultra detailed, cinematic lighting, 8k, masterpiece."
+                )            
+        
             prompt_encoded = urllib.parse.quote(prompt_artistico)
             seed = random.randint(1, 999999)
             
