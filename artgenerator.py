@@ -132,14 +132,14 @@ if st.button("Genera Visione Artistica"):
         st.session_state.immagine_fatta = None 
         st.session_state.testo_fatto = ""
 
-        with st.spinner(f"Il maestro {pittore} sta dipingendo e scrivendo l'analisi..."):
+        with st.spinner(f"Il maestro {pittore} sta dipingendo..."):
                                
             prompt_artistico = (
-                f"A masterpiece painting depicting '{soggetto}' by {pittore}. "
-                f"Impeccable historical fine art style, capturing {pittore}'s exact brush strokes, impasto texture, "
-                f"authentic canvas grain, and signature composition. "
-                f"Highly cohesive visual storytelling, period-accurate lighting, gallery exhibition quality, "
-                f"completely free of digital artifacts."
+                f"An authentic painting of '{soggetto}', executed in the unmistakable artistic style of {pittore}. "
+                f"Faithful reproduction of {pittore}'s signature visual language, characteristic brushwork, "
+                f"distinctive color palette, specific lighting, and emotional atmosphere. "
+                f"A long-lost masterpiece from the painter's iconic creative period. "
+                f"Fine art aesthetic, rich oil on canvas texture, masterful composition, museum quality."
             )
             
             prompt_encoded = urllib.parse.quote(prompt_artistico)
