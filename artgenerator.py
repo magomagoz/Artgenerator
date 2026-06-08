@@ -159,61 +159,40 @@ col1, col2 = st.columns(2)
 pittore = col1.text_input("🎨 Nome completo del Pittore (movimento artistico e/o tecnica specifica)")
 soggetto = col2.text_input("Soggetto da dipingere")
 
-    if st.button("Genera Visione Artistica"):
-        if pittore and soggetto:
-            st.session_state.immagine_fatta = None 
-            st.session_state.testo_fatto = ""
-    
-            with st.spinner(f"Studio del maestro {pittore} in corso e preparazione della tela..."):
+if st.button("Genera Visione Artistica"):
+    if pittore and soggetto:
+        st.session_state.immagine_fatta = None 
+        st.session_state.testo_fatto = ""
+
+        with st.spinner(f"Studio del maestro {pittore} in corso e preparazione della tela..."):
+            
+            # --- FASE 1: INTERROGAZIONE IN BACKGROUND (DNA DEL PITTORE) ---
+            specifiche_pittore = interroga_specifiche_pittore(pittore, api_key)
+            
+            # Se l'IA ha risposto, iniettiamo le specifiche, altrimenti lasciamo vuoto
+            aiuto_stile = f", embodying: {specifiche_pittore}," if specifiche_pittore else ""
+            
+            # --- FASE 2: COMPOSIZIONE PROMPT UNIVERSALE DINAMICO ---
+            prompt_artistico = (
+                f"A masterwork painting depicting '{soggetto}' inside the world and unique vision of {pittore}{aiuto_stile}. "
+                f"The image must encapsulate the profound essence of {pittore}'s art: from the authentic physical medium "
+                f"to the historical technique, surface texture, and period-accurate color theory. "
+                f"The subject '{soggetto}' is completely reinterpreted through the painter's core creative philosophy and compositional logic, "
+                f"as a genuine piece from their era. Fine art aesthetic, museum exhibition quality, free of digital rendering artifacts."
+            )            
+            
+            prompt_encoded = urllib.parse.quote(prompt_artistico)
+            seed = random.randint(1, 999999)
+            
+            image_url = f"https://gen.pollinations.ai/image/{prompt_encoded}?width=1024&height=768&nologo=true&seed={seed}&key={api_key}"
+            
+            try:
+                # --- FASE 3: GENERAZIONE IMMAGINE ---
+                response = requests.get(image_url, timeout=45) 
                 
-                # --- FASE 1: INTERROGAZIONE IN BACKGROUND (DNA DEL PITTORE) ---
-                specifiche_pittore = interroga_specifiche_pittore(pittore, api_key)
-                
-                # Se l'IA ha risposto, iniettiamo le specifiche, altrimenti lasciamo vuoto
-                aiuto_stile = f", embodying: {specifiche_pittore}," if specifiche_pittore else ""
-                
-                # --- FASE 2: COMPOSIZIONE PROMPT UNIVERSALE DINAMICO ---
-                prompt_artistico = (
-                    f"A masterwork painting depicting '{soggetto}' inside the world and unique vision of {pittore}{aiuto_stile}. "
-                    f"The image must encapsulate the profound essence of {pittore}'s art: from the authentic physical medium "
-                    f"to the historical technique, surface texture, and period-accurate color theory. "
-                    f"The subject '{soggetto}' is completely reinterpreted through the painter's core creative philosophy and compositional logic, "
-                    f"as a genuine piece from their era. Fine art aesthetic, museum exhibition quality, free of digital rendering artifacts."
-                )            
-                
-                prompt_encoded = urllib.parse.quote(prompt_artistico)
-                seed = random.randint(1, 999999)
-                
-                image_url = f"https://gen.pollinations.ai/image/{prompt_encoded}?width=1024&height=768&nologo=true&seed={seed}&key={api_key}"
-                
-                try:
-                    # --- FASE 3: GENERAZIONE IMMAGINE ---
-                    response = requests.get(image_url, timeout=45) 
-                    
-                    if response.status_code == 200:
-                        # --- FASE 4: GENERAZIONE TESTO CRITICO ---
-                        testo_critico = genera_analisi_ia(pittore, soggetto, api_key)
-                        
-                        # Salva tutto nello stato contemporaneamente
-                        st.session_state.immagine_fatta = response.content
-                        st.session_state.pittore_fatto = pittore
-                        st.session_state.soggetto_fatto = soggetto
-                        st.session_state.testo_fatto = testo_critico
-                        
-                        # --- LOGICA DEL TIMER ---
-                        placeholder = st.empty()
-                        for seconds in range(10, 0, -1):
-                            placeholder.warning(f"⏳ Pronto per una nuova opera tra {seconds} secondi.")
-                            time.sleep(1)
-                        placeholder.success("✅ Pronto per una nuova generazione!")
-                        
-                        st.rerun() 
-                    else:
-                        st.error(f"Errore restituito dal server Pollinations Immagine (Codice: {response.status_code}).")
-                except Exception as e:
-                    st.error(f"Errore di connessione o timeout: {e}")
-        else:
-            st.warning("Inserisci entrambi i campi.")
+                if response.status_code == 200:
+                    # --- FASE 4: GENERAZIONE TESTO CRITICO ---
+                    testo_critico = genera_analisi_ia(pittore, soggetto, api_key)
                     
                     # Salva tutto nello stato contemporaneamente
                     st.session_state.immagine_fatta = response.content
@@ -230,12 +209,12 @@ soggetto = col2.text_input("Soggetto da dipingere")
                     
                     st.rerun() 
                 else:
-                    st.error(f"Errore restituito dal server Pollinations Immagine (Codice: {response.status_code}). Verifica l'API Key.")
+                    st.error(f"Errore restituito dal server Pollinations Immagine (Codice: {response.status_code}).")
             except Exception as e:
-                st.error(f"Errore di connessione: L'API ci ha messo troppo tempo a rispondere. {e}")
+                st.error(f"Errore di connessione o timeout: {e}")
     else:
         st.warning("Inserisci entrambi i campi.")
-
+    
 # --- MOSTRA L'IMMAGINE E I PULSANTI DOWNLOAD ---
 if st.session_state.immagine_fatta is not None:
     st.image(st.session_state.immagine_fatta, 
